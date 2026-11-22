@@ -4,7 +4,6 @@
 <script src="https://cdn.jsdelivr.net/npm/aes-js@3.1.2/index.js"></script>
 
 <style>
-/* Dark-first terminal aesthetic — security research tool */
 :root {
   --bg:       #0d1117;
   --panel:    #161b22;
@@ -21,14 +20,12 @@
   --sans: 'Inter', system-ui, sans-serif;
   color-scheme: dark;
 }
-
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     --bg: #f6f8fa; --panel: #ffffff; --surface: #f0f3f6;
     --border: #d0d7de; --fg: #1f2328; --muted: #57606a;
     --dim: #b1bac4; --accent: #0284c7; --green: #1a7f37;
-    --yellow: #9a6700; --red: #cf222e;
-    color-scheme: light;
+    --yellow: #9a6700; --red: #cf222e; color-scheme: light;
   }
 }
 :root[data-theme="light"] {
@@ -37,197 +34,77 @@
   --dim: #b1bac4; --accent: #0284c7; --green: #1a7f37;
   --yellow: #9a6700; --red: #cf222e; color-scheme: light;
 }
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--sans);
-  font-size: 14px;
-  line-height: 1.6;
-  padding-left:  max(16px, env(safe-area-inset-left,  0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--bg); color: var(--fg);
+  font-family: var(--sans); font-size: 14px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left,0px));
+  padding-right: max(16px, env(safe-area-inset-right,0px));
   padding-block: 20px 40px;
 }
-
-/* ── Header ── */
-.header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 20px;
-}
-.logo {
-  width: 38px; height: 38px;
-  background: var(--accent);
-  border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--mono); font-weight: 700; font-size: 18px;
-  color: #000; flex-shrink: 0; letter-spacing: -1px;
-}
-.header-text h1 { font-size: 17px; font-weight: 600; }
-.header-text small {
-  font-size: 11px; color: var(--muted);
-  letter-spacing: .07em; text-transform: uppercase;
-}
-.header-actions { margin-left: auto; display: flex; gap: 8px; }
-.btn-sm {
-  padding: 5px 11px; border-radius: 6px; font-size: 12px; font-weight: 500;
-  cursor: pointer; border: 1px solid var(--border);
-  background: var(--surface); color: var(--fg); font-family: var(--sans);
-  transition: background .12s;
-}
-.btn-sm:hover { background: var(--border); }
-.btn-sm:disabled { opacity: .4; cursor: not-allowed; }
-
-/* ── Status bar ── */
-.status-bar {
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 14px;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-  margin-bottom: 16px;
-  font-family: var(--mono); font-size: 12px;
-}
-.dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--dim); flex-shrink: 0;
-  transition: background .3s;
-}
-.dot.ok   { background: var(--green); animation: pulse 2.5s infinite; box-shadow: 0 0 5px var(--green); }
-.dot.busy { background: var(--yellow); animation: pulse 1s infinite; }
-.dot.err  { background: var(--red); }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
-#status-msg { flex: 1; color: var(--muted); }
-#poll-label { color: var(--dim); white-space: nowrap; }
-
-/* ── Top grid ── */
-.top-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 14px;
-}
-@media (max-width: 580px) { .top-grid { grid-template-columns: 1fr; } }
-
-.card {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-  padding: 14px 16px;
-}
-.card-label {
-  font-size: 11px; font-weight: 600; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
-}
-
-/* target */
-#target-host {
-  font-family: var(--mono); font-size: 13px; color: var(--accent);
-  word-break: break-all; min-height: 20px; line-height: 1.5;
-}
-#copy-btn {
-  margin-top: 10px; padding: 5px 12px; border-radius: 6px;
-  font-size: 12px; font-weight: 500; cursor: pointer;
-  background: var(--surface); border: 1px solid var(--border);
-  color: var(--fg); font-family: var(--sans); transition: all .15s;
-}
-#copy-btn:hover { background: var(--border); }
-#copy-btn.ok { color: var(--green); border-color: var(--green); }
-
-/* stats */
-.stats { display: flex; gap: 0; }
-.stat { flex: 1; padding: 0 12px; border-right: 1px solid var(--border); }
-.stat:first-child { padding-left: 0; }
-.stat:last-child  { border-right: none; }
-.stat-n {
-  font-family: var(--mono); font-size: 26px; font-weight: 700;
-  color: var(--fg); line-height: 1; font-variant-numeric: tabular-nums;
-}
-.stat-l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-
-/* ── Log panel ── */
-.log-panel {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-  overflow: hidden; margin-bottom: 14px;
-}
-.log-head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 14px; border-bottom: 1px solid var(--border);
-}
-.log-head-title {
-  font-size: 11px; font-weight: 600; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--muted);
-}
-#log-wrap { overflow-x: auto; min-height: 120px; }
-
-.empty {
-  padding: 36px 20px; text-align: center; color: var(--muted);
-}
-.empty-icon { font-size: 28px; opacity: .3; margin-bottom: 10px; }
-.empty p { font-size: 13px; line-height: 1.6; }
-
-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
-th {
-  padding: 7px 12px; text-align: left;
-  color: var(--muted); font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
-  border-bottom: 1px solid var(--border); background: var(--surface); white-space: nowrap;
-}
-td { padding: 7px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; min-width: 0; }
-tr:last-child td { border-bottom: none; }
-tr.new-row td { animation: fadein .4s ease; }
-@keyframes fadein { from { background: color-mix(in srgb, var(--accent) 12%, transparent); } }
-tr:hover td { background: var(--surface); }
-
-.td-time { color: var(--muted); white-space: nowrap; }
-.badge {
-  display: inline-block; padding: 1px 6px; border-radius: 4px;
-  font-size: 10px; font-weight: 700; letter-spacing: .04em;
-}
-.badge-dns  { background: rgba(0,180,216,.13); color: var(--accent); }
-.badge-http { background: rgba(63,185,80,.13);  color: var(--green); }
-.badge-smtp { background: rgba(227,179,65,.13); color: var(--yellow); }
-.td-ip { color: var(--muted); white-space: nowrap; }
-.td-ip b { color: var(--yellow); }
-.td-query { color: var(--fg); word-break: break-all; max-width: 420px; }
-.td-query b { color: var(--accent); }
-
-/* ── Instructions ── */
-.inst-panel {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-  padding: 14px 16px;
-}
-.inst-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
-.step { display: flex; gap: 10px; margin-bottom: 9px; align-items: flex-start; }
-.step-n {
-  width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--mono); font-size: 11px; font-weight: 700;
-  color: var(--accent); flex-shrink: 0;
-}
-.step-body { font-size: 13px; color: var(--muted); line-height: 1.5; }
-.step-body code {
-  font-family: var(--mono); font-size: 11px; color: var(--fg);
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 3px; padding: 1px 4px;
-}
-
-/* ── Error / retry ── */
-.retry-wrap { padding: 24px; text-align: center; }
-#retry-btn {
-  padding: 9px 20px; background: var(--accent); color: #000;
-  font-family: var(--sans); font-size: 13px; font-weight: 600;
-  border: none; border-radius: 8px; cursor: pointer; opacity: .9;
-}
-#retry-btn:hover { opacity: 1; }
-
-/* ── New entry flash ── */
-.new-badge {
-  display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 3px;
-  font-size: 10px; background: var(--green); color: #000;
-  font-weight: 700; vertical-align: middle; animation: fadeout 3s forwards;
-}
-@keyframes fadeout { 0%,70%{opacity:1} 100%{opacity:0; width:0; padding:0; margin:0} }
+.header { display:flex; align-items:center; gap:12px; padding-bottom:20px; border-bottom:1px solid var(--border); margin-bottom:20px; }
+.logo { width:38px; height:38px; background:var(--accent); border-radius:9px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:18px; color:#000; flex-shrink:0; letter-spacing:-1px; }
+.header-text h1 { font-size:17px; font-weight:600; }
+.header-text small { font-size:11px; color:var(--muted); letter-spacing:.07em; text-transform:uppercase; }
+.header-actions { margin-left:auto; }
+.btn-sm { padding:5px 11px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--surface); color:var(--fg); font-family:var(--sans); transition:background .12s; }
+.btn-sm:hover { background:var(--border); }
+.btn-sm:disabled { opacity:.4; cursor:not-allowed; }
+.status-bar { display:flex; align-items:center; gap:8px; padding:9px 14px; background:var(--panel); border:1px solid var(--border); border-radius:8px; margin-bottom:16px; font-family:var(--mono); font-size:12px; }
+.dot { width:8px; height:8px; border-radius:50%; background:var(--dim); flex-shrink:0; transition:background .3s; }
+.dot.ok   { background:var(--green); animation:pulse 2.5s infinite; box-shadow:0 0 5px var(--green); }
+.dot.busy { background:var(--yellow); animation:pulse 1s infinite; }
+.dot.err  { background:var(--red); }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.35} }
+#status-msg { flex:1; color:var(--muted); }
+#poll-label { color:var(--dim); white-space:nowrap; }
+.top-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+@media(max-width:580px){.top-grid{grid-template-columns:1fr}}
+.card { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.card-label { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+#target-host { font-family:var(--mono); font-size:13px; color:var(--accent); word-break:break-all; min-height:20px; line-height:1.5; }
+#copy-btn { margin-top:10px; padding:5px 12px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; background:var(--surface); border:1px solid var(--border); color:var(--fg); font-family:var(--sans); transition:all .15s; }
+#copy-btn:hover { background:var(--border); }
+#copy-btn.ok { color:var(--green); border-color:var(--green); }
+.stats { display:flex; }
+.stat { flex:1; padding:0 12px; border-right:1px solid var(--border); }
+.stat:first-child { padding-left:0; }
+.stat:last-child  { border-right:none; }
+.stat-n { font-family:var(--mono); font-size:26px; font-weight:700; color:var(--fg); line-height:1; font-variant-numeric:tabular-nums; }
+.stat-l { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+.log-panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:14px; }
+.log-head { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border); }
+.log-head-title { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+#log-wrap { overflow-x:auto; min-height:120px; }
+.empty { padding:36px 20px; text-align:center; color:var(--muted); }
+.empty-icon { font-size:28px; opacity:.3; margin-bottom:10px; }
+.empty p { font-size:13px; line-height:1.6; }
+table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px; }
+th { padding:7px 12px; text-align:left; color:var(--muted); font-size:11px; letter-spacing:.07em; text-transform:uppercase; border-bottom:1px solid var(--border); background:var(--surface); white-space:nowrap; }
+td { padding:7px 12px; border-bottom:1px solid var(--border); vertical-align:middle; min-width:0; }
+tr:last-child td { border-bottom:none; }
+tr.new-row td { animation:fadein .4s ease; }
+@keyframes fadein { from{background:color-mix(in srgb,var(--accent) 12%,transparent)} }
+tr:hover td { background:var(--surface); }
+.td-time { color:var(--muted); white-space:nowrap; }
+.badge { display:inline-block; padding:1px 6px; border-radius:4px; font-size:10px; font-weight:700; letter-spacing:.04em; }
+.badge-dns  { background:rgba(0,180,216,.13); color:var(--accent); }
+.badge-http { background:rgba(63,185,80,.13); color:var(--green); }
+.badge-smtp { background:rgba(227,179,65,.13); color:var(--yellow); }
+.td-ip { color:var(--muted); white-space:nowrap; }
+.td-ip b { color:var(--yellow); }
+.td-query { color:var(--fg); word-break:break-all; max-width:420px; }
+.td-query b { color:var(--accent); }
+.inst-panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.inst-title { font-size:13px; font-weight:600; margin-bottom:12px; }
+.step { display:flex; gap:10px; margin-bottom:9px; align-items:flex-start; }
+.step-n { width:20px; height:20px; border-radius:50%; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:11px; font-weight:700; color:var(--accent); flex-shrink:0; }
+.step-body { font-size:13px; color:var(--muted); line-height:1.5; }
+.step-body code { font-family:var(--mono); font-size:11px; color:var(--fg); background:var(--surface); border:1px solid var(--border); border-radius:3px; padding:1px 4px; }
+.retry-wrap { padding:24px; text-align:center; }
+#retry-btn { padding:9px 20px; background:var(--accent); color:#000; font-family:var(--sans); font-size:13px; font-weight:600; border:none; border-radius:8px; cursor:pointer; }
+.new-badge { display:inline-block; margin-left:6px; padding:1px 5px; border-radius:3px; font-size:10px; background:var(--green); color:#000; font-weight:700; vertical-align:middle; animation:fadeout 3s forwards; }
+@keyframes fadeout { 0%,70%{opacity:1}100%{opacity:0;width:0;padding:0;margin:0} }
 </style>
 
 <div class="header">
@@ -249,25 +126,16 @@ tr:hover td { background: var(--surface); }
 
 <div class="top-grid">
   <div class="card">
-    <div class="card-label">DNS Target (use as TARGET_DOMAIN in PoC)</div>
+    <div class="card-label">DNS Target — set as TARGET_DOMAIN in PoC APK</div>
     <div id="target-host">Generating session…</div>
     <button id="copy-btn" onclick="copyTarget()">Copy</button>
   </div>
   <div class="card">
     <div class="card-label">Session Hits</div>
     <div class="stats">
-      <div class="stat">
-        <div class="stat-n" id="st-total">0</div>
-        <div class="stat-l">Queries</div>
-      </div>
-      <div class="stat">
-        <div class="stat-n" id="st-ips">0</div>
-        <div class="stat-l">Source IPs</div>
-      </div>
-      <div class="stat">
-        <div class="stat-n" id="st-last" style="font-size:14px;padding-top:4px">—</div>
-        <div class="stat-l">Last Hit</div>
-      </div>
+      <div class="stat"><div class="stat-n" id="st-total">0</div><div class="stat-l">Queries</div></div>
+      <div class="stat"><div class="stat-n" id="st-ips">0</div><div class="stat-l">Source IPs</div></div>
+      <div class="stat"><div class="stat-n" id="st-last" style="font-size:14px;padding-top:4px">—</div><div class="stat-l">Last Hit</div></div>
     </div>
   </div>
 </div>
@@ -287,247 +155,173 @@ tr:hover td { background: var(--surface); }
 
 <div class="inst-panel">
   <div class="inst-title">PoC Setup — Android 16 AutofillManager Deserialization (CWE-502)</div>
-  <div class="step">
-    <div class="step-n">1</div>
-    <div class="step-body">Copy the DNS target domain above. It's a unique <code>.oast.pro</code> subdomain assigned to this browser session.</div>
-  </div>
-  <div class="step">
-    <div class="step-n">2</div>
-    <div class="step-body">In <code>PocAutofillService.java</code>, replace the <code>TARGET_DOMAIN</code> constant with the copied value.</div>
-  </div>
-  <div class="step">
-    <div class="step-n">3</div>
-    <div class="step-body">Build and install: <code>./gradlew assembleDebug &amp;&amp; adb install -r app/build/outputs/apk/debug/*.apk</code></div>
-  </div>
-  <div class="step">
-    <div class="step-n">4</div>
-    <div class="step-body">Open the PoC app. <code>requestAutofill()</code> fires automatically on window focus (Bypass 2) — no user tap required.</div>
-  </div>
-  <div class="step">
-    <div class="step-n">5</div>
-    <div class="step-body">DNS queries from <code>android.uid.system (UID 1000)</code> — with no <code>INTERNET</code> permission declared — appear in the live log above within seconds, with source IP confirmed.</div>
-  </div>
-  <div class="step">
-    <div class="step-n">6</div>
-    <div class="step-body">Cross-reference the source IP with <code>adb shell ip addr</code> or the device's public IP to prove the query originated from this device. Timestamps match the logcat <code>ClassCastException</code> entries in <code>system_server</code> PID.</div>
-  </div>
+  <div class="step"><div class="step-n">1</div><div class="step-body">Copy the DNS target domain above. It's a unique <code>.oast.pro</code> subdomain for this session, with interact.sh's authoritative nameserver logging every query.</div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-body">In <code>PocAutofillService.java</code>, replace the <code>TARGET_DOMAIN</code> constant with the copied value and rebuild.</div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-body">Install: <code>./gradlew assembleDebug &amp;&amp; adb install -r app/build/outputs/apk/debug/*.apk</code></div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-body">Open the PoC app. <code>requestAutofill()</code> fires automatically on window focus (Bypass 2) — no user tap required.</div></div>
+  <div class="step"><div class="step-n">5</div><div class="step-body">DNS queries from <code>android.uid.system (UID 1000)</code> — with no <code>INTERNET</code> permission declared in the PoC APK — appear in the live log above within seconds, with the source IP confirmed.</div></div>
+  <div class="step"><div class="step-n">6</div><div class="step-body">Cross-reference the source IP with <code>adb shell ip addr</code>. Timestamps match the <code>ClassCastException</code> in <code>system_server</code> PID logged via <code>adb logcat</code>.</div></div>
 </div>
 
 <script>
-// ─── utils ───────────────────────────────────────────────────────────────────
-function b64ToBuf(b64) {
-  const s = atob(b64), buf = new Uint8Array(s.length);
-  for (let i = 0; i < s.length; i++) buf[i] = s.charCodeAt(i);
-  return buf.buffer;
-}
-function bufToB64(buf) {
-  return btoa(String.fromCharCode(...new Uint8Array(buf)));
-}
-function rand(n, cs = 'abcdefghijklmnopqrstuvwxyz0123456789') {
-  const b = crypto.getRandomValues(new Uint8Array(n));
-  return Array.from(b).map(x => cs[x % cs.length]).join('');
-}
-function fmtTime(iso) {
-  try { return new Date(iso).toLocaleTimeString(); } catch(e) { return '—'; }
-}
+function b64ToBuf(b64){const s=atob(b64),buf=new Uint8Array(s.length);for(let i=0;i<s.length;i++)buf[i]=s.charCodeAt(i);return buf.buffer}
+function bufToB64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)))}
+function rand(n,cs='abcdefghijklmnopqrstuvwxyz0123456789'){const b=crypto.getRandomValues(new Uint8Array(n));return Array.from(b).map(x=>cs[x%cs.length]).join('')}
+function fmtTime(iso){try{return new Date(iso).toLocaleTimeString()}catch(e){return '—'}}
 
-// ─── state ───────────────────────────────────────────────────────────────────
-const SERVER = 'https://oast.pro';
-let privateKey = null, correlationId = null, secretKey = null;
-let targetDomain = null;
-let items = [], seenIds = new Set(), uniqueIPs = new Set();
-let timer = null, countdown = 5, aesKeyCache = null;
+// interactsh public servers to try in order
+const SERVERS=['https://oast.pro','https://oast.fun','https://oast.site','https://oast.me'];
+let SERVER='';
+let privateKey=null,correlationId=null,secretKey=null,targetDomain=null;
+let items=[],seenIds=new Set(),uniqueIPs=new Set();
+let timer=null,countdown=5,aesKeyCache=null;
 
-// ─── ui helpers ──────────────────────────────────────────────────────────────
-function setStatus(msg, state) {
-  document.getElementById('status-msg').textContent = msg;
-  const d = document.getElementById('dot');
-  d.className = 'dot' + (state ? ' ' + state : '');
+function setStatus(msg,state){
+  document.getElementById('status-msg').textContent=msg;
+  const d=document.getElementById('dot');
+  d.className='dot'+(state?' '+state:'');
 }
-function setPollLabel(txt) {
-  document.getElementById('poll-label').textContent = txt;
+function setPollLabel(t){document.getElementById('poll-label').textContent=t}
+function showTarget(d){document.getElementById('target-host').textContent=d}
+function updateStats(){
+  document.getElementById('st-total').textContent=items.length;
+  document.getElementById('st-ips').textContent=uniqueIPs.size;
+  if(items.length)document.getElementById('st-last').textContent=fmtTime(items[items.length-1].timestamp);
 }
-function showTarget(d) {
-  document.getElementById('target-host').textContent = d;
-}
-function updateStats() {
-  document.getElementById('st-total').textContent = items.length;
-  document.getElementById('st-ips').textContent = uniqueIPs.size;
-  if (items.length) {
-    document.getElementById('st-last').textContent = fmtTime(items[items.length - 1].timestamp);
+function renderTable(isNew=false){
+  const wrap=document.getElementById('log-wrap');
+  const title=document.getElementById('log-title');
+  if(!items.length){
+    wrap.innerHTML='<div class="empty"><div class="empty-icon">◉</div><p>No interactions yet.<br>Set <strong>TARGET_DOMAIN</strong> in the PoC APK to the value above, then run it.</p></div>';
+    title.textContent='Live Interaction Log';return;
   }
-}
-function renderTable(isNew = false) {
-  const wrap = document.getElementById('log-wrap');
-  const title = document.getElementById('log-title');
-  if (!items.length) {
-    wrap.innerHTML = `<div class="empty"><div class="empty-icon">◉</div><p>No interactions yet.<br>Set <strong>TARGET_DOMAIN</strong> in the PoC APK to the value above, then run it.</p></div>`;
-    title.textContent = 'Live Interaction Log';
-    return;
-  }
-  title.innerHTML = `Live Interaction Log <span class="new-badge" id="nb" style="${isNew?'':'display:none'}">NEW</span>`;
-  const rows = items.slice().reverse().map((itx, i) => {
-    const proto = (itx.protocol || 'dns').toUpperCase();
-    const cls   = proto === 'DNS' ? 'badge-dns' : proto === 'HTTP' ? 'badge-http' : 'badge-smtp';
-    const ip    = (itx['remote-address'] || '—').replace(/:\d+$/, '');
-    const q     = itx['full-id'] || itx['unique-id'] || '—';
-    const isNewRow = isNew && i === 0 ? ' class="new-row"' : '';
-    // Highlight UID-1000 sequences in the query
-    const qHtml = q.replace(/(uid1000)/gi, '<b>$1</b>');
-    const ipHtml = uniqueIPs.has(ip) && items.filter(x => (x['remote-address']||'').replace(/:\d+$/,'') === ip).length > 1
-      ? `<b>${ip}</b>` : ip;
-    return `<tr${isNewRow}><td class="td-time">${fmtTime(itx.timestamp)}</td><td><span class="badge ${cls}">${proto}</span></td><td class="td-ip">${ipHtml}</td><td class="td-query">${qHtml}</td></tr>`;
+  title.innerHTML='Live Interaction Log'+(isNew?'<span class="new-badge">NEW</span>':'');
+  const rows=items.slice().reverse().map((itx,i)=>{
+    const proto=(itx.protocol||'dns').toUpperCase();
+    const cls=proto==='DNS'?'badge-dns':proto==='HTTP'?'badge-http':'badge-smtp';
+    const ip=(itx['remote-address']||'—').replace(/:\d+$/,'');
+    const q=itx['full-id']||itx['unique-id']||'—';
+    const nr=isNew&&i===0?' class="new-row"':'';
+    return `<tr${nr}><td class="td-time">${fmtTime(itx.timestamp)}</td><td><span class="badge ${cls}">${proto}</span></td><td class="td-ip">${ip}</td><td class="td-query">${q.replace(/(uid1000)/gi,'<b>$1</b>')}</td></tr>`;
   }).join('');
-  wrap.innerHTML = `<table><thead><tr><th>Time</th><th>Proto</th><th>Source IP</th><th>Full Query / ID</th></tr></thead><tbody>${rows}</tbody></table>`;
-  if (isNew) setTimeout(() => { const nb = document.getElementById('nb'); if (nb) nb.style.display = 'none'; }, 3500);
+  wrap.innerHTML=`<table><thead><tr><th>Time</th><th>Proto</th><th>Source IP</th><th>Full Query / ID</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
-function clearLog() {
-  items = []; seenIds = new Set(); uniqueIPs = new Set();
-  updateStats(); renderTable();
+function clearLog(){items=[];seenIds=new Set();uniqueIPs=new Set();updateStats();renderTable()}
+function copyTarget(){
+  if(!targetDomain)return;
+  const btn=document.getElementById('copy-btn');
+  try{navigator.clipboard.writeText(targetDomain).then(()=>{btn.textContent='Copied!';btn.classList.add('ok');setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('ok')},2000)}).catch(()=>fallbackCopy(btn))}
+  catch(e){fallbackCopy(btn)}
 }
-
-// ─── copy button ─────────────────────────────────────────────────────────────
-function copyTarget() {
-  if (!targetDomain) return;
-  const btn = document.getElementById('copy-btn');
-  try {
-    navigator.clipboard.writeText(targetDomain).then(() => {
-      btn.textContent = 'Copied!'; btn.classList.add('ok');
-      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 2000);
-    }).catch(() => fallbackCopy(btn));
-  } catch(e) { fallbackCopy(btn); }
+function fallbackCopy(btn){
+  const r=document.createRange();r.selectNodeContents(document.getElementById('target-host'));
+  window.getSelection().removeAllRanges();window.getSelection().addRange(r);
+  btn.textContent='Selected!';setTimeout(()=>btn.textContent='Copy',2000);
 }
-function fallbackCopy(btn) {
-  const r = document.createRange();
-  r.selectNodeContents(document.getElementById('target-host'));
-  window.getSelection().removeAllRanges();
-  window.getSelection().addRange(r);
-  btn.textContent = 'Selected!';
-  setTimeout(() => btn.textContent = 'Copy', 2000);
-}
-
-// ─── new session ─────────────────────────────────────────────────────────────
-function newSession() {
-  if (timer) clearInterval(timer);
-  privateKey = null; aesKeyCache = null;
-  items = []; seenIds = new Set(); uniqueIPs = new Set();
-  updateStats(); renderTable();
+function newSession(){
+  if(timer)clearInterval(timer);privateKey=null;aesKeyCache=null;SERVER='';
+  items=[];seenIds=new Set();uniqueIPs=new Set();updateStats();renderTable();
   init();
 }
 
-// ─── interactsh client ───────────────────────────────────────────────────────
-async function init() {
-  const btn = document.getElementById('new-session-btn');
-  btn.disabled = true;
-  setStatus('Generating RSA-2048 keypair…', 'busy');
+async function init(){
+  const btn=document.getElementById('new-session-btn');
+  btn.disabled=true;
+  setStatus('Generating RSA-2048 keypair…','busy');
   showTarget('Generating…');
-
-  try {
-    const kp = await crypto.subtle.generateKey(
-      { name: 'RSA-OAEP', modulusLength: 2048, publicExponent: new Uint8Array([1,0,1]), hash: 'SHA-256' },
-      true, ['encrypt', 'decrypt']
+  try{
+    // KEY FIX: generate RSASSA-PKCS1-v1_5 so the SPKI export carries the standard
+    // rsaEncryption OID (1.2.840.113549.1.1.1) instead of id-RSAES-OAEP.
+    // Go's x509.ParsePKIXPublicKey on the interactsh server requires that OID.
+    // We then re-import the private JWK as RSA-OAEP so we can still decrypt.
+    const kp=await crypto.subtle.generateKey(
+      {name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},
+      true,['sign','verify']
     );
-    privateKey = kp.privateKey;
+    const pubDer=await crypto.subtle.exportKey('spki',kp.publicKey); // rsaEncryption OID ✓
+    const pubB64=bufToB64(pubDer);
 
-    const pubDer = await crypto.subtle.exportKey('spki', kp.publicKey);
-    const pubB64 = bufToB64(pubDer);
+    // Re-import private key as RSA-OAEP for AES key decryption
+    const privJwk=await crypto.subtle.exportKey('jwk',kp.privateKey);
+    privJwk.alg='RSA-OAEP-256';
+    privJwk.key_ops=['decrypt'];
+    privateKey=await crypto.subtle.importKey(
+      'jwk',privJwk,{name:'RSA-OAEP',hash:'SHA-256'},false,['decrypt']
+    );
 
-    correlationId = rand(20);
-    secretKey     = rand(32);
-    targetDomain  = correlationId + '.oast.pro';
+    correlationId=rand(20);
+    secretKey=rand(32);
 
-    showTarget(targetDomain);
-    setStatus('Registering session…', 'busy');
-
-    const resp = await fetch(SERVER + '/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 'public-key': pubB64, 'secret-key': secretKey, 'correlation-id': correlationId })
-    });
-
-    if (!resp.ok) throw new Error('Server returned ' + resp.status);
-
-    setStatus('Listening on ' + targetDomain, 'ok');
-    btn.disabled = false;
-    startPolling();
-
-  } catch(e) {
-    setStatus('Could not reach interact.sh: ' + e.message, 'err');
-    btn.disabled = false;
-    document.getElementById('log-wrap').innerHTML = `
-      <div class="empty">
-        <div class="empty-icon" style="opacity:.5">⚠</div>
-        <p>Could not connect to <strong>oast.pro</strong>.<br>
-           Check network or try a fresh session.</p>
-        <br>
-        <div class="retry-wrap">
-          <button id="retry-btn" onclick="newSession()">↺ New Session</button>
-        </div>
-      </div>`;
-  }
-}
-
-// ─── polling ─────────────────────────────────────────────────────────────────
-function startPolling() {
-  if (timer) clearInterval(timer);
-  countdown = 1; // poll immediately
-  timer = setInterval(tick, 1000);
-}
-
-async function tick() {
-  countdown--;
-  if (countdown <= 0) {
-    countdown = 5;
-    await poll();
-  }
-  setPollLabel(countdown > 0 ? 'next poll ' + countdown + 's' : 'polling…');
-}
-
-async function poll() {
-  if (!correlationId || !secretKey || !privateKey) return;
-  try {
-    const r = await fetch(`${SERVER}/poll?id=${correlationId}&secret=${secretKey}`);
-    if (!r.ok) return;
-    const data = await r.json();
-
-    if (!data.data || !data.data.length) return;
-
-    // Decrypt AES key once per session (cached)
-    if (!aesKeyCache && data.aes_key) {
-      const rawBuf = await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, privateKey, b64ToBuf(data.aes_key));
-      aesKeyCache = Array.from(new Uint8Array(rawBuf));
-    }
-    if (!aesKeyCache) return;
-
-    let gotNew = false;
-    for (const encB64 of data.data) {
-      try {
-        const enc = new Uint8Array(b64ToBuf(encB64));
-        const iv      = Array.from(enc.slice(0, 16));
-        const payload = Array.from(enc.slice(16));
-        // AES-CFB128 decrypt via aes-js
-        const cfb = new aesjs.ModeOfOperation.cfb(aesKeyCache, iv, 16);
-        const dec = cfb.decrypt(payload);
-        const txt = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(dec));
-        const itx = JSON.parse(txt);
-        const uid = itx['unique-id'] || itx['full-id'] || txt;
-        if (!seenIds.has(uid)) {
-          seenIds.add(uid);
-          items.push(itx);
-          const ip = (itx['remote-address'] || '').replace(/:\d+$/, '');
-          if (ip) uniqueIPs.add(ip);
-          gotNew = true;
+    // Try each public interactsh server until one accepts the registration
+    let lastErr='';
+    for(const srv of SERVERS){
+      try{
+        setStatus('Trying '+srv+'…','busy');
+        const resp=await fetch(srv+'/register',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({'public-key':pubB64,'secret-key':secretKey,'correlation-id':correlationId})
+        });
+        if(!resp.ok){
+          const t=await resp.text().catch(()=>'');
+          lastErr=srv+' → '+resp.status+(t?' ('+t.slice(0,60)+')':'');
+          continue;
         }
-      } catch(_) { /* skip malformed */ }
+        SERVER=srv;
+        const host=srv.replace('https://','');
+        targetDomain=correlationId+'.'+host;
+        showTarget(targetDomain);
+        setStatus('Listening · '+targetDomain,'ok');
+        btn.disabled=false;
+        startPolling();
+        return;
+      }catch(e){lastErr=srv+' → '+e.message;continue;}
     }
-
-    if (gotNew) {
-      updateStats();
-      renderTable(true);
-    }
-  } catch(_) { /* network error — keep polling */ }
+    throw new Error('All servers failed. Last: '+lastErr);
+  }catch(e){
+    setStatus('Registration failed: '+e.message,'err');
+    btn.disabled=false;
+    document.getElementById('log-wrap').innerHTML=`<div class="retry-wrap"><p style="color:var(--muted);margin-bottom:12px">${e.message.slice(0,120)}</p><button id="retry-btn" onclick="newSession()">↺ New Session</button></div>`;
+  }
 }
 
-// ─── boot ────────────────────────────────────────────────────────────────────
+function startPolling(){
+  if(timer)clearInterval(timer);countdown=1;
+  timer=setInterval(tick,1000);
+}
+async function tick(){
+  countdown--;
+  if(countdown<=0){countdown=5;await poll()}
+  setPollLabel(countdown>0?'next poll '+countdown+'s':'polling…');
+}
+async function poll(){
+  if(!correlationId||!secretKey||!privateKey||!SERVER)return;
+  try{
+    const r=await fetch(`${SERVER}/poll?id=${correlationId}&secret=${secretKey}`);
+    if(!r.ok)return;
+    const data=await r.json();
+    if(!data.data||!data.data.length)return;
+    if(!aesKeyCache&&data.aes_key){
+      const raw=await crypto.subtle.decrypt({name:'RSA-OAEP'},privateKey,b64ToBuf(data.aes_key));
+      aesKeyCache=Array.from(new Uint8Array(raw));
+    }
+    if(!aesKeyCache)return;
+    let gotNew=false;
+    for(const encB64 of data.data){
+      try{
+        const enc=new Uint8Array(b64ToBuf(encB64));
+        const iv=Array.from(enc.slice(0,16)),payload=Array.from(enc.slice(16));
+        // AES-CFB128 (16-byte segment, matches Go's cipher.NewCFBEncrypter)
+        const cfb=new aesjs.ModeOfOperation.cfb(aesKeyCache,iv,16);
+        const dec=cfb.decrypt(payload);
+        const txt=new TextDecoder('utf-8',{fatal:false}).decode(new Uint8Array(dec));
+        const itx=JSON.parse(txt);
+        const uid=itx['unique-id']||itx['full-id']||txt;
+        if(!seenIds.has(uid)){seenIds.add(uid);items.push(itx);const ip=(itx['remote-address']||'').replace(/:\d+$/,'');if(ip)uniqueIPs.add(ip);gotNew=true;}
+      }catch(_){}
+    }
+    if(gotNew){updateStats();renderTable(true)}
+  }catch(_){}
+}
 init();
 </script>
