@@ -165,7 +165,29 @@ tr:hover td { background:var(--surface); }
 
 <script>
 function b64ToBuf(b64){const s=atob(b64),buf=new Uint8Array(s.length);for(let i=0;i<s.length;i++)buf[i]=s.charCodeAt(i);return buf.buffer}
-function bufToB64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)))}
+function bufToB64(arr){
+  // Safe for large arrays — avoids spread-into-String.fromCharCode stack overflow
+  let s='';for(let i=0;i<arr.length;i++)s+=String.fromCharCode(arr[i]);
+  return btoa(s);
+}
+function b64urlToArr(b64u){
+  b64u=b64u.replace(/-/g,'+').replace(/_/g,'/');
+  while(b64u.length%4)b64u+='=';
+  const s=atob(b64u),a=new Uint8Array(s.length);
+  for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a;
+}
+// ---- Manual RSA SPKI DER builder (guarantees rsaEncryption OID for Go) ----
+function buildRSASPKI(n,e){
+  function cat(...a){const len=a.reduce((s,x)=>s+x.length,0),r=new Uint8Array(len);let o=0;a.forEach(x=>{r.set(x,o);o+=x.length;});return r}
+  function derLen(l){return l<128?new Uint8Array([l]):l<256?new Uint8Array([0x81,l]):new Uint8Array([0x82,l>>8,l&0xff])}
+  function tlv(tag,...c){const b=cat(...c);return cat(new Uint8Array([tag]),derLen(b.length),b)}
+  function derInt(a){return tlv(0x02,...(a[0]&0x80?[new Uint8Array([0]),a]:[a]))}
+  const oid=new Uint8Array([0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x01,0x01]);
+  const algId=tlv(0x30,tlv(0x06,oid),new Uint8Array([0x05,0x00])); // OID + NULL
+  const rsaKey=tlv(0x30,derInt(n),derInt(e));
+  const bitStr=tlv(0x03,new Uint8Array([0x00]),rsaKey);
+  return tlv(0x30,algId,bitStr);
+}
 function rand(n,cs='abcdefghijklmnopqrstuvwxyz0123456789'){const b=crypto.getRandomValues(new Uint8Array(n));return Array.from(b).map(x=>cs[x%cs.length]).join('')}
 function fmtTime(iso){try{return new Date(iso).toLocaleTimeString()}catch(e){return '—'}}
 
@@ -230,24 +252,20 @@ async function init(){
   setStatus('Generating RSA-2048 keypair…','busy');
   showTarget('Generating…');
   try{
-    // KEY FIX: generate RSASSA-PKCS1-v1_5 so the SPKI export carries the standard
-    // rsaEncryption OID (1.2.840.113549.1.1.1) instead of id-RSAES-OAEP.
-    // Go's x509.ParsePKIXPublicKey on the interactsh server requires that OID.
-    // We then re-import the private JWK as RSA-OAEP so we can still decrypt.
+    // Build RSA-2048 keypair, then construct the SPKI DER *manually* from JWK
+    // bytes so we guarantee rsaEncryption OID (1.2.840.113549.1.1.1) with NULL
+    // params — exactly what Go's x509.ParsePKIXPublicKey expects.
+    // Using WebCrypto exportKey('spki') is unreliable because Chrome/Edge may
+    // embed algorithm-specific parameters even for PKCS1-v1_5 keys.
     const kp=await crypto.subtle.generateKey(
-      {name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},
-      true,['sign','verify']
+      {name:'RSA-OAEP',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},
+      true,['decrypt']
     );
-    const pubDer=await crypto.subtle.exportKey('spki',kp.publicKey); // rsaEncryption OID ✓
-    const pubB64=bufToB64(pubDer);
+    privateKey=kp.privateKey;
 
-    // Re-import private key as RSA-OAEP for AES key decryption
-    const privJwk=await crypto.subtle.exportKey('jwk',kp.privateKey);
-    privJwk.alg='RSA-OAEP-256';
-    privJwk.key_ops=['decrypt'];
-    privateKey=await crypto.subtle.importKey(
-      'jwk',privJwk,{name:'RSA-OAEP',hash:'SHA-256'},false,['decrypt']
-    );
+    // Export public key as JWK to get raw modulus (n) and exponent (e)
+    const pubJwk=await crypto.subtle.exportKey('jwk',kp.publicKey);
+    const pubB64=bufToB64(buildRSASPKI(b64urlToArr(pubJwk.n),b64urlToArr(pubJwk.e)));
 
     correlationId=rand(20);
     secretKey=rand(32);
